@@ -381,9 +381,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 7.0),
-                            child: CustomText(_.city.value +
-                                " iftar based on mecca duration " +
-                                formatter.format(iftarUser)),
+                            child: CustomText(
+                              _.city.value +
+                                  " iftar based on mecca duration " +
+                                  formatter.format(iftarUser),
+                              maxLines: 3,
+                            ),
                           ),
                         ],
                       ),

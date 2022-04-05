@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:catcher/catcher.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:dio/adapter.dart';
@@ -12,9 +13,11 @@ import 'package:dio/dio.dart' as dio;
 import 'package:path_provider/path_provider.dart';
 import 'package:syami/constants/String%20constants.dart';
 import 'package:syami/controller/classes.dart';
+import 'package:syami/controller/locator.dart';
 import 'package:syami/dialogs/update%20dialog.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:geocoding/geocoding.dart';
 
 class SearchEngine extends GetxController {
   late Catcher catcher;
@@ -24,20 +27,24 @@ class SearchEngine extends GetxController {
   }
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String serverUrlGoGoAnime = "https://gogoanime.film";
   String appVersion = "1.0.0";
   List<UpdateVersion> releaseNotes = [];
-  List<dynamic>? jsonResponse = [];
+
   RxString loadingState = "".obs;
+  RxString city = "".obs;
+  RxString country = "".obs;
 
   dio.CancelToken token = dio.CancelToken();
   late dio.Dio dioInter;
 
   Version? latestVersion;
-
+  List<DayPrayer> userPrayer = [];
+  List<DayPrayer> meccaPrayer = [];
   Future<void> afterLoading() async {
     print("checkForUpdate()");
-
+    //print(await determinePosition());
+    //print();
+    //getLocation();
     if (GetPlatform.isAndroid) {
       await checkForUpdate();
     }
@@ -46,6 +53,46 @@ class SearchEngine extends GetxController {
     }
 
     //update();
+  }
+
+  Future<void> getLocation() async {
+    loadingState.value = "Getting Location";
+    Map<String, String> location =
+        await getCityFromPosition(await determinePosition());
+    print(location);
+    await getApiForLocation(location["city"]!, location["country"]!);
+    print("###########################");
+  }
+
+//https://api.aladhan.com/v1/calendar?latitude=51.508515&longitude=-0.1254872
+  Future<void> getApiForLocation(String city, String country) async {
+    loadingState.value = "Getting Prayer Times";
+    List<dynamic>? jsonResponse = [];
+    String urlDone =
+        serverUrlApi + "calendarByCity?city=$city&country=$country";
+    dio.Response response = await loadLink(urlDone);
+    //print(response.data);
+    if (response.statusCode == 200) {
+      //print(response.data);
+      jsonResponse = response.data["data"];
+
+      //print(jsonResponse);
+    }
+  }
+
+  Future<dynamic> getApiForPosition(Position pos) async {
+    loadingState.value = "Getting Prayer Times";
+    List<dynamic>? jsonResponse = [];
+    String urlDone = serverUrlApi +
+        "calendar?latitude=${pos.latitude}&longitude=${pos.longitude}";
+    dio.Response response = await loadLink(urlDone);
+    //print(response.data);
+    if (response.statusCode == 200) {
+      //print(response.data);
+      jsonResponse = response.data["data"];
+      return jsonResponse;
+      //print(jsonResponse);
+    }
   }
 
   Future<dio.Response> loadLink(
@@ -109,17 +156,18 @@ class SearchEngine extends GetxController {
         "https://storage.googleapis.com/anime-293309.appspot.com/SyamiV0.json?avoidTheCaches=1";
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
+    List<dynamic>? jsonResponse = [];
     if (response.statusCode == 200) {
       jsonResponse = response.data;
       //print(jsonResponse);
       releaseNotes = [];
       for (int j = 0; j < jsonResponse!.length; j++) {
         releaseNotes.add(UpdateVersion(
-            version: jsonResponse![j]["Version"],
-            description: jsonResponse![j]["Release Notes"]));
+            version: jsonResponse[j]["Version"],
+            description: jsonResponse[j]["Release Notes"]));
         // add every element you get to be able to show it to the user
       }
-      latestVersion = jsonToVersion(jsonResponse![0]["Version"]);
+      latestVersion = jsonToVersion(jsonResponse[0]["Version"]);
     } else {
       print("Request failed with status: ${response.statusCode}.");
     }
@@ -129,6 +177,7 @@ class SearchEngine extends GetxController {
     String urlDone =
         "https://storage.googleapis.com/anime-293309.appspot.com/SyamiV1.json?avoidTheCaches=1";
     dio.Response response = await loadLink(urlDone);
+    List<dynamic>? jsonResponse = [];
     //print(response.data);
     if (response.statusCode == 200) {
       jsonResponse = response.data;
@@ -136,11 +185,11 @@ class SearchEngine extends GetxController {
       releaseNotes = [];
       for (int j = 0; j < jsonResponse!.length; j++) {
         releaseNotes.add(UpdateVersion(
-            version: jsonResponse![j]["Version"],
-            description: jsonResponse![j]["Release Notes"]));
+            version: jsonResponse[j]["Version"],
+            description: jsonResponse[j]["Release Notes"]));
         // add every element you get to be able to show it to the user
       }
-      latestVersion = jsonToVersion(jsonResponse![0]["Version"]);
+      latestVersion = jsonToVersion(jsonResponse[0]["Version"]);
     } else {
       print("Request failed with status: ${response.statusCode}.");
     }
@@ -199,7 +248,7 @@ class SearchEngine extends GetxController {
 
     await initScreenUtil();
 
-    //setCatcherLogsPath();
+    setCatcherLogsPath();
 
     dioInter = dio.Dio();
     (dioInter.httpClientAdapter as DefaultHttpClientAdapter)
@@ -225,9 +274,62 @@ class SearchEngine extends GetxController {
         Duration(seconds: 3), // wait 3 sec before third retry
       ],
     ));
-
+    getPrayerTimes();
     update();
     afterLoading();
+  }
+
+  Future<void> getPrayerTimes() async {
+    Position MeccaPos = const Position(
+        speedAccuracy: 0,
+        heading: 0,
+        longitude: 39.826168,
+        speed: 0,
+        altitude: 0,
+        latitude: 21.422510,
+        timestamp: null,
+        accuracy: 0);
+    var meccaPrayerTimes = await getApiForPosition(MeccaPos);
+
+    for (int i = 0; i < meccaPrayerTimes.length; i++) {
+      //print();
+      meccaPrayer.add(DayPrayer(
+        meccaPrayerTimes[i]["date"]["gregorian"]["date"],
+        meccaPrayerTimes[i]["date"]["gregorian"]["format"],
+        meccaPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
+        meccaPrayerTimes[i]["timings"]["Fajr"],
+        meccaPrayerTimes[i]["timings"]["Dhuhr"],
+        meccaPrayerTimes[i]["timings"]["Asr"],
+        meccaPrayerTimes[i]["timings"]["Maghrib"],
+        meccaPrayerTimes[i]["timings"]["Isha"],
+      ));
+    }
+    print("meccaPrayerTimes" + meccaPrayerTimes.toString());
+    Position userPos = await determinePosition();
+    Map<String, String> location = await getCityFromPosition(userPos);
+    print(location);
+    city.value = location["city"] ?? "Unknown";
+    country.value = location["country"] ?? "Unknown";
+
+    var userPrayerTimes = await getApiForPosition(userPos);
+
+    for (int i = 0; i < userPrayerTimes.length; i++) {
+      userPrayer.add(DayPrayer(
+        userPrayerTimes[i]["date"]["gregorian"]["date"],
+        userPrayerTimes[i]["date"]["gregorian"]["format"],
+        userPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
+        userPrayerTimes[i]["timings"]["Fajr"],
+        userPrayerTimes[i]["timings"]["Dhuhr"],
+        userPrayerTimes[i]["timings"]["Asr"],
+        userPrayerTimes[i]["timings"]["Maghrib"],
+        userPrayerTimes[i]["timings"]["Isha"],
+      ));
+    }
+    if (meccaPrayer[0].date != userPrayer[0].date) {
+      print("DATES ARE NOT ALIGNED");
+    }
+    update();
+    print("userPrayerTimes" + userPrayerTimes.toString());
   }
 
   setCatcherLogsPath() async {

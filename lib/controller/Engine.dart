@@ -27,7 +27,7 @@ class SearchEngine extends GetxController {
   }
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.0";
+  String appVersion = "1.0.2";
   List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;

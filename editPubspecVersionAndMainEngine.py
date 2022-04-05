@@ -5,7 +5,7 @@ from packaging import version
 pubspec =os.path.join(os.getcwd(),"pubspec.yaml")
 mainEngine =os.path.join(os.getcwd(),"lib","controller","Engine.dart")
 
-v0Path=os.path.join(os.getcwd(),"syami_Updates","V0.json")
+v0Path=os.path.join(os.getcwd(),"syami_Updates","SyamiV0.json")
 # Opening JSON file
 f0 = open(v0Path)
 

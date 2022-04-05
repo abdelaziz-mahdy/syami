@@ -1,5 +1,9 @@
 [
 	{
+		"Version": "1.0.2",
+		"Release Notes": "Updater fixed , icon updated"
+	},
+	{
 		"Version": "1.0.1",
 		"Release Notes": "some texts failing to show fixed"
 	},

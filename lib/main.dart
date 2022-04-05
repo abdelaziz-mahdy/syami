@@ -158,6 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: GetBuilder<SearchEngine>(builder: (_) {
               //_.userPrayer;
               //print(_.userPrayer.length);
+
               bool hourFormattedAs24 =
                   MediaQuery.of(context).alwaysUse24HourFormat;
               String hourFormat = hourFormattedAs24 ? 'HH:mm' : 'hh:mm a';

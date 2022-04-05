@@ -27,7 +27,7 @@ class SearchEngine extends GetxController {
   }
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.2";
+  String appVersion = "1.0.3";
   List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;
@@ -289,11 +289,12 @@ class SearchEngine extends GetxController {
         latitude: 21.422510,
         timestamp: null,
         accuracy: 0);
+    int todayDay = (DateTime.now()).day;
+    int todayMonth = (DateTime.now()).month;
     var meccaPrayerTimes = await getApiForPosition(MeccaPos);
 
     for (int i = 0; i < meccaPrayerTimes.length; i++) {
-      //print();
-      meccaPrayer.add(DayPrayer(
+      DayPrayer dayPrayer = DayPrayer(
         meccaPrayerTimes[i]["date"]["gregorian"]["date"],
         meccaPrayerTimes[i]["date"]["gregorian"]["format"],
         meccaPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
@@ -302,7 +303,12 @@ class SearchEngine extends GetxController {
         meccaPrayerTimes[i]["timings"]["Asr"],
         meccaPrayerTimes[i]["timings"]["Maghrib"],
         meccaPrayerTimes[i]["timings"]["Isha"],
-      ));
+      );
+      //print();
+      if (dayPrayer.date.month >= todayMonth &&
+          dayPrayer.date.day >= todayDay) {
+        meccaPrayer.add(dayPrayer);
+      }
     }
     print("meccaPrayerTimes" + meccaPrayerTimes.toString());
     Position userPos = await determinePosition();
@@ -314,7 +320,7 @@ class SearchEngine extends GetxController {
     var userPrayerTimes = await getApiForPosition(userPos);
 
     for (int i = 0; i < userPrayerTimes.length; i++) {
-      userPrayer.add(DayPrayer(
+      DayPrayer dayPrayer = DayPrayer(
         userPrayerTimes[i]["date"]["gregorian"]["date"],
         userPrayerTimes[i]["date"]["gregorian"]["format"],
         userPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
@@ -323,7 +329,12 @@ class SearchEngine extends GetxController {
         userPrayerTimes[i]["timings"]["Asr"],
         userPrayerTimes[i]["timings"]["Maghrib"],
         userPrayerTimes[i]["timings"]["Isha"],
-      ));
+      );
+      //print();
+      if (dayPrayer.date.month >= todayMonth &&
+          dayPrayer.date.day >= todayDay) {
+        userPrayer.add(dayPrayer);
+      }
     }
     if (meccaPrayer[0].date != userPrayer[0].date) {
       print("DATES ARE NOT ALIGNED");

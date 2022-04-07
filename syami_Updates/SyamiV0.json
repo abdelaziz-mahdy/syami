@@ -1,5 +1,9 @@
 [
 	{
+		"Version": "1.0.5",
+		"Release Notes": "Made some optimization"
+	},
+	{
 		"Version": "1.0.4",
 		"Release Notes": "Days starts from now date"
 	},

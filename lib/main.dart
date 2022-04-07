@@ -173,6 +173,41 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   },
                   itemBuilder: (BuildContext context, int index) {
+                    if (dateFormatter.format(_.meccaPrayer[index].date) !=
+                        dateFormatter.format(_.userPrayer[index].date)) {
+                      return Container(
+                        padding: const EdgeInsets.all(7),
+                        margin: const EdgeInsets.only(left: 7, right: 7),
+                        decoration: BoxDecoration(
+                            color: Colors.black,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                blurRadius: 3.0,
+                                spreadRadius: 0.0,
+                                offset: Offset(
+                                    2.0, 2.0), // shadow direction: bottom right
+                              )
+                            ],
+                            borderRadius: BorderRadius.circular(
+                                StringConstants.cornersSettings)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            const CustomText(
+                              "Dates are not the same",
+                              color: Colors.red,
+                            ),
+                            const Spacer(),
+                            CustomText(
+                                "mecca date :${dateFormatter.format(_.meccaPrayer[index].date)}"),
+                            CustomText(
+                                "${_.city} date :${dateFormatter.format(_.userPrayer[index].date)}")
+                          ],
+                        ),
+                      );
+                    }
                     Duration fastingMecca = _.meccaPrayer[index].maghrib
                         .difference(_.meccaPrayer[index].fajr);
                     Duration fastingUser = _.userPrayer[index].maghrib

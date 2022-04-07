@@ -27,7 +27,7 @@ class SearchEngine extends GetxController {
   }
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.3";
+  String appVersion = "1.0.4";
   List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;
@@ -305,7 +305,7 @@ class SearchEngine extends GetxController {
         meccaPrayerTimes[i]["timings"]["Isha"],
       );
       //print();
-      if (dayPrayer.date.month >= todayMonth &&
+      if (dayPrayer.date.month >= todayMonth ||
           dayPrayer.date.day >= todayDay) {
         meccaPrayer.add(dayPrayer);
       }
@@ -331,7 +331,7 @@ class SearchEngine extends GetxController {
         userPrayerTimes[i]["timings"]["Isha"],
       );
       //print();
-      if (dayPrayer.date.month >= todayMonth &&
+      if (dayPrayer.date.month >= todayMonth ||
           dayPrayer.date.day >= todayDay) {
         userPrayer.add(dayPrayer);
       }

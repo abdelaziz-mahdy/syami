@@ -11,6 +11,7 @@ import 'package:dio/adapter.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:path_provider/path_provider.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/String%20constants.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
@@ -36,6 +37,7 @@ class SearchEngine extends GetxController {
   RxBool appLoaded = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
+  RefreshController listRefresher = RefreshController(initialRefresh: false);
 
   dio.CancelToken token = dio.CancelToken();
   late dio.Dio dioInter;
@@ -44,6 +46,17 @@ class SearchEngine extends GetxController {
   RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
   RxList<DayPrayer> meccaPrayer = RxList<DayPrayer>();
   int monthLoaded = 0;
+  int yearLoaded = 0;
+  Position meccaPosition = const Position(
+      speedAccuracy: 0,
+      heading: 0,
+      longitude: 39.826168,
+      speed: 0,
+      altitude: 0,
+      latitude: 21.422510,
+      timestamp: null,
+      accuracy: 0);
+  Position? userPosition;
   @override
   void dispose() {
     //  flutterWebviewPlugin.dispose();
@@ -91,7 +104,7 @@ class SearchEngine extends GetxController {
         Duration(seconds: 3), // wait 3 sec before third retry
       ],
     ));
-    getPrayerTimes(monthLoaded);
+    getPrayerTimes(month: monthLoaded);
     //update();
     afterLoading();
     appLoaded.value = true;
@@ -137,10 +150,10 @@ class SearchEngine extends GetxController {
     }
   }
 
-  Future<dynamic> getApiForPosition(Position pos) async {
+  Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
     List<dynamic>? jsonResponse = [];
     String urlDone = serverUrlApi +
-        "calendar?latitude=${pos.latitude}&longitude=${pos.longitude}";
+        "calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year";
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
     if (response.statusCode == 200) {
@@ -283,34 +296,76 @@ class SearchEngine extends GetxController {
     }
   }
 
-  Future<void> getPrayerTimes(int month, {bool getNewLocation = false}) async {
-    int todayDay = (DateTime.now()).day;
-    int todayMonth = (DateTime.now()).month;
-    if (month == 0) {}
+  Future<void> getUserLocation({bool getNewLocation = false}) async {
     loadingState.value = "Getting your location";
-    Position userPos = await determinePosition(getNew: getNewLocation);
-    Map<String, String> location = await getCityFromPosition(userPos);
+    userPosition = await determinePosition(getNew: getNewLocation);
+    Map<String, String> location = await getCityFromPosition(userPosition!);
     print(location);
     city.value = location["city"] ?? "Unknown";
     country.value = location["country"] ?? "Unknown";
+  }
+
+  Future<void> getPrayerTimes(
+      {int month = 0, bool getNewLocation = false}) async {
+    DateTime nowTime = (DateTime.now());
+    int todayDay = nowTime.day;
+    int todayMonth = nowTime.month;
+    int todayYear = nowTime.year;
+    int monthToGetTimesOn = 0;
+    int yearToGetTimesOn = 0;
+    if (yearLoaded == 0) {
+      yearToGetTimesOn = todayYear;
+      yearLoaded = todayYear;
+    }
+    if (month == 0) {
+      monthToGetTimesOn = todayMonth;
+    } else {
+      if (month > 12) {
+        monthToGetTimesOn = 1;
+        yearToGetTimesOn = yearLoaded + 1;
+      } else {
+        monthToGetTimesOn = month;
+      }
+    }
+    if (getNewLocation) {
+      userPrayer.clear();
+      meccaPrayer.clear();
+    }
+    if (userPosition == null || getNewLocation) {
+      await getUserLocation(getNewLocation: getNewLocation);
+    }
 
     loadingState.value = "Getting prayer times for " +
         (city.value == "Unknown" || city.value == ""
             ? country.value
             : city.value);
 
-    Position MeccaPos = const Position(
-        speedAccuracy: 0,
-        heading: 0,
-        longitude: 39.826168,
-        speed: 0,
-        altitude: 0,
-        latitude: 21.422510,
-        timestamp: null,
-        accuracy: 0);
+    var userPrayerTimes = await getApiForPosition(
+        userPosition!, monthToGetTimesOn, yearToGetTimesOn);
+    var meccaPrayerTimes = await getApiForPosition(
+        meccaPosition, monthToGetTimesOn, yearToGetTimesOn);
+    for (int i = 0; i < userPrayerTimes.length; i++) {
+      DayPrayer dayPrayer = DayPrayer(
+        userPrayerTimes[i]["date"]["gregorian"]["date"],
+        userPrayerTimes[i]["date"]["gregorian"]["format"],
+        userPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
+        userPrayerTimes[i]["timings"]["Fajr"],
+        userPrayerTimes[i]["timings"]["Dhuhr"],
+        userPrayerTimes[i]["timings"]["Asr"],
+        userPrayerTimes[i]["timings"]["Maghrib"],
+        userPrayerTimes[i]["timings"]["Isha"],
+      );
+      //print();
+      if (dayPrayer.date.month == todayMonth) {
+        if (dayPrayer.date.day >= todayDay) {
+          userPrayer.add(dayPrayer);
+        }
+      } else {
+        userPrayer.add(dayPrayer);
+      }
+    }
 
     //loadingState.value = "Getting Prayer Times for mecca";
-    var meccaPrayerTimes = await getApiForPosition(MeccaPos);
 
     for (int i = 0; i < meccaPrayerTimes.length; i++) {
       DayPrayer dayPrayer = DayPrayer(
@@ -333,33 +388,19 @@ class SearchEngine extends GetxController {
       }
     }
     print("meccaPrayerTimes" + meccaPrayerTimes.toString());
-    var userPrayerTimes = await getApiForPosition(userPos);
 
-    for (int i = 0; i < userPrayerTimes.length; i++) {
-      DayPrayer dayPrayer = DayPrayer(
-        userPrayerTimes[i]["date"]["gregorian"]["date"],
-        userPrayerTimes[i]["date"]["gregorian"]["format"],
-        userPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
-        userPrayerTimes[i]["timings"]["Fajr"],
-        userPrayerTimes[i]["timings"]["Dhuhr"],
-        userPrayerTimes[i]["timings"]["Asr"],
-        userPrayerTimes[i]["timings"]["Maghrib"],
-        userPrayerTimes[i]["timings"]["Isha"],
-      );
-      //print();
-      if (dayPrayer.date.month == todayMonth) {
-        if (dayPrayer.date.day >= todayDay) {
-          userPrayer.add(dayPrayer);
-        }
-      } else {
-        userPrayer.add(dayPrayer);
-      }
-    }
+    yearLoaded = yearToGetTimesOn;
+    monthLoaded = monthToGetTimesOn;
     if (meccaPrayer[0].date != userPrayer[0].date) {
       print("DATES ARE NOT ALIGNED");
     }
-    update();
+    //update();
     print("userPrayerTimes" + userPrayerTimes.toString());
+  }
+
+  Future<void> loadMoreMonth() async {
+    await getPrayerTimes(month: monthLoaded + 1);
+    listRefresher.loadComplete();
   }
 /*
   setCatcherLogsPath() async {
@@ -407,11 +448,14 @@ class SearchEngine extends GetxController {
       width = Get.height;
     }
     ScreenUtil.init(
+        /*
         BoxConstraints(
             maxWidth: width, //new width
             maxHeight: height //new height
             ),
-        context: Get.context,
+
+       */
+        Get.context!,
         designSize: Size(411.42857142857144, 683.4285714285714),
         orientation: Orientation.portrait,
         minTextAdapt: true);

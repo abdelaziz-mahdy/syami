@@ -4,6 +4,7 @@ import 'package:catcher/catcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/String%20constants.dart';
 import 'package:syami/controller/Engine.dart';
 
@@ -162,36 +163,47 @@ class _MyHomePageState extends State<MyHomePage> {
               //_.userPrayer;
               //print(_.userPrayer.length);
 
-              return Container(
-                  padding: const EdgeInsets.all(7),
-                  margin: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                      color: Colors.black,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 3.0,
-                          spreadRadius: 0.0,
-                          offset: Offset(
-                              2.0, 2.0), // shadow direction: bottom right
-                        )
-                      ],
-                      borderRadius: BorderRadius.circular(
-                          StringConstants.cornersSettings)),
-                  child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        CustomAutoSizeText(
-                          "Country: " + _.country.value,
-                          bold: true,
-                        ),
-                        //Spacer(),
-                        CustomAutoSizeText(
-                          "City: " + _.city.value,
-                          bold: true,
-                        ),
-                      ]));
+              return Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Container(
+                    padding: const EdgeInsets.all(7),
+                    margin: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                        color: Colors.black,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black,
+                            blurRadius: 3.0,
+                            spreadRadius: 0.0,
+                            offset: Offset(
+                                2.0, 2.0), // shadow direction: bottom right
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(
+                            StringConstants.cornersSettings)),
+                    child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          CustomAutoSizeText(
+                            "Country: " + _.country.value,
+                            bold: true,
+                          ),
+                          //Spacer(),
+                          CustomAutoSizeText(
+                            "City: " + _.city.value,
+                            bold: true,
+                          ),
+                          IconButton(
+                              onPressed: () {
+                                _.getPrayerTimes(getNewLocation: true);
+                              },
+                              icon: const Icon(
+                                Icons.refresh,
+                                color: Colors.white,
+                              ))
+                        ])),
+              );
             }),
             Expanded(
               child: GetBuilder<SearchEngine>(builder: (_) {
@@ -204,14 +216,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 DateFormat formatter = DateFormat(hourFormat);
                 DateFormat dateFormatter = DateFormat("dd-MM-yyyy");
                 return SmartRefresher(
-                  enablePullDown: true,
+                  enablePullDown: false,
                   enablePullUp: true,
-                  controller: refreshController,
-                  onRefresh: () {
-                    controller.onRefresh(refreshController);
-                  },
+                  controller: _.listRefresher,
+                  footer: const ClassicFooter(
+                    loadingIcon: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      color: Colors.black,
+                    ),
+                    textStyle: TextStyle(color: Colors.black),
+                  ),
                   onLoading: () {
-                    controller.onLoading(refreshController);
+                    _.loadMoreMonth();
                   },
                   child: ListView.separated(
                       scrollDirection: Axis.vertical,
@@ -265,242 +281,245 @@ class _MyHomePageState extends State<MyHomePage> {
                         DateTime iftarUser =
                             _.userPrayer[index].fajr.add(fastingMecca);
 
-                        return Container(
-                          padding: const EdgeInsets.all(7),
-                          margin: const EdgeInsets.only(left: 7, right: 7),
-                          decoration: BoxDecoration(
-                              color: Colors.black,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black,
-                                  blurRadius: 3.0,
-                                  spreadRadius: 0.0,
-                                  offset: Offset(2.0,
-                                      2.0), // shadow direction: bottom right
-                                )
-                              ],
-                              borderRadius: BorderRadius.circular(
-                                  StringConstants.cornersSettings)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Row(
-                                children: [
-                                  CustomAutoSizeText(
-                                    _.meccaPrayer[index].weekDay,
-                                    bold: true,
-                                    //defaultFont: 18,
-                                    maxFont: 18,
-                                  ),
-                                  const Spacer(),
-                                  CustomAutoSizeText(
-                                    dateFormatter.format(
-                                      _.meccaPrayer[index].date,
-                                    ),
-                                    bold: true,
-                                    //defaultFont: 18,
-                                    maxFont: 18,
-                                  ),
+                        return Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(15),
+                            margin: const EdgeInsets.only(left: 7, right: 7),
+                            decoration: BoxDecoration(
+                                color: Colors.black,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black,
+                                    blurRadius: 3.0,
+                                    spreadRadius: 0.0,
+                                    offset: Offset(2.0,
+                                        2.0), // shadow direction: bottom right
+                                  )
                                 ],
-                              ),
-                              const Divider(),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 7.0),
-                                child: CustomAutoSizeText(
-                                  "Mecca Times",
-                                  maxFont: 18,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, bottom: 25.0),
-                                child: Table(
-                                    border:
-                                        TableBorder.all(color: Colors.white),
-                                    // Allows to add a border decoration around your table
-                                    children: [
-                                      const TableRow(children: [
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          "Fajr",
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Dhuhr',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Asr',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Maghrib',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Isha',
-                                        )),
-                                      ]),
-                                      TableRow(children: [
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.meccaPrayer[index].fajr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.meccaPrayer[index].dhuhr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.meccaPrayer[index].asr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.meccaPrayer[index].maghrib),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.meccaPrayer[index].isha),
-                                          ),
-                                        ),
-                                      ]),
-                                    ]),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7.0),
-                                child: CustomAutoSizeText(
-                                  _.city.value + " Prayer Times",
-                                  maxFont: 18,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, bottom: 25.0),
-                                child: Table(
-                                    border:
-                                        TableBorder.all(color: Colors.white),
-                                    // Allows to add a border decoration around your table
-                                    children: [
-                                      const TableRow(children: [
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          "Fajr",
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Dhuhr',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Asr',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Maghrib',
-                                        )),
-                                        Center(
-                                            child: CustomAutoSizeText(
-                                          'Isha',
-                                        )),
-                                      ]),
-                                      TableRow(children: [
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.userPrayer[index].fajr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.userPrayer[index].dhuhr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.userPrayer[index].asr),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.userPrayer[index].maghrib),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: CustomAutoSizeText(
-                                            formatter.format(
-                                                _.userPrayer[index].isha),
-                                          ),
-                                        ),
-                                      ]),
-                                    ]),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7.0),
-                                child: Row(
+                                borderRadius: BorderRadius.circular(
+                                    StringConstants.cornersSettings)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Row(
                                   children: [
-                                    const Expanded(
-                                      child: CustomAutoSizeText(
-                                          "Mecca Fasting Duration "),
+                                    CustomAutoSizeText(
+                                      _.meccaPrayer[index].weekDay,
+                                      bold: true,
+                                      //defaultFont: 18,
+                                      maxFont: 18,
                                     ),
-                                    Expanded(
-                                        child: CustomAutoSizeText(
-                                      _printDuration(fastingMecca),
-                                      color: Colors.blue,
-                                    ))
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: CustomAutoSizeText(
-                                          _.city.value + " Fasting Duration "),
-                                    ),
-                                    Expanded(
-                                        child: CustomAutoSizeText(
-                                      _printDuration(fastingUser),
-                                      color: Colors.blue,
-                                    ))
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 7.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: CustomAutoSizeText(
-                                        _.city.value +
-                                            " iftar based on mecca duration ",
-                                        maxLines: 3,
+                                    const Spacer(),
+                                    CustomAutoSizeText(
+                                      dateFormatter.format(
+                                        _.meccaPrayer[index].date,
                                       ),
+                                      bold: true,
+                                      //defaultFont: 18,
+                                      maxFont: 18,
                                     ),
-                                    Expanded(
-                                        child: CustomAutoSizeText(
-                                      formatter.format(iftarUser),
-                                      maxLines: 3,
-                                      color: Colors.blue,
-                                    ))
                                   ],
                                 ),
-                              ),
-                            ],
+                                const Divider(),
+                                const Padding(
+                                  padding: EdgeInsets.only(bottom: 7.0),
+                                  child: CustomAutoSizeText(
+                                    "Mecca Times",
+                                    maxFont: 18,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 5, right: 5, bottom: 25.0),
+                                  child: Table(
+                                      border:
+                                          TableBorder.all(color: Colors.white),
+                                      // Allows to add a border decoration around your table
+                                      children: [
+                                        const TableRow(children: [
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            "Fajr",
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Dhuhr',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Asr',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Maghrib',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Isha',
+                                          )),
+                                        ]),
+                                        TableRow(children: [
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.meccaPrayer[index].fajr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.meccaPrayer[index].dhuhr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.meccaPrayer[index].asr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.meccaPrayer[index].maghrib),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.meccaPrayer[index].isha),
+                                            ),
+                                          ),
+                                        ]),
+                                      ]),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 7.0),
+                                  child: CustomAutoSizeText(
+                                    _.city.value + " Prayer Times",
+                                    maxFont: 18,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 5, right: 5, bottom: 25.0),
+                                  child: Table(
+                                      border:
+                                          TableBorder.all(color: Colors.white),
+                                      // Allows to add a border decoration around your table
+                                      children: [
+                                        const TableRow(children: [
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            "Fajr",
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Dhuhr',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Asr',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Maghrib',
+                                          )),
+                                          Center(
+                                              child: CustomAutoSizeText(
+                                            'Isha',
+                                          )),
+                                        ]),
+                                        TableRow(children: [
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.userPrayer[index].fajr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.userPrayer[index].dhuhr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.userPrayer[index].asr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.userPrayer[index].maghrib),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomAutoSizeText(
+                                              formatter.format(
+                                                  _.userPrayer[index].isha),
+                                            ),
+                                          ),
+                                        ]),
+                                      ]),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 7.0),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: CustomAutoSizeText(
+                                            "Mecca Fasting Duration "),
+                                      ),
+                                      Expanded(
+                                          child: CustomAutoSizeText(
+                                        _printDuration(fastingMecca),
+                                        color: Colors.blue,
+                                      ))
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 7.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: CustomAutoSizeText(_.city.value +
+                                            " Fasting Duration "),
+                                      ),
+                                      Expanded(
+                                          child: CustomAutoSizeText(
+                                        _printDuration(fastingUser),
+                                        color: Colors.blue,
+                                      ))
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 7.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: CustomAutoSizeText(
+                                          _.city.value +
+                                              " iftar based on mecca duration ",
+                                          maxLines: 3,
+                                        ),
+                                      ),
+                                      Expanded(
+                                          child: CustomAutoSizeText(
+                                        formatter.format(iftarUser),
+                                        maxLines: 3,
+                                        color: Colors.blue,
+                                      ))
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }),

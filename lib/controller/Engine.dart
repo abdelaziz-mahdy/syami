@@ -15,7 +15,6 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/String%20constants.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
-import 'package:syami/dialogs/update%20dialog.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:geocoding/geocoding.dart';
@@ -70,7 +69,6 @@ class SearchEngine extends GetxController {
     if (GetPlatform.isWindows) {
       await windowManager.ensureInitialized();
       await windowManager.setMinimumSize(const Size(600, 600));
-
       //windowManager.getSize().asStream().listen((event) {
       //print(event);
       //});
@@ -106,23 +104,8 @@ class SearchEngine extends GetxController {
     ));
     getPrayerTimes(month: monthLoaded);
     //update();
-    afterLoading();
+    //afterLoading();
     appLoaded.value = true;
-  }
-
-  Future<void> afterLoading() async {
-    print("checkForUpdate()");
-    //print(await determinePosition());
-    //print();
-    //getLocation();
-    if (GetPlatform.isAndroid) {
-      await checkForUpdate();
-    }
-    if (GetPlatform.isWindows) {
-      await checkForUpdateWindows();
-    }
-
-    //update();
   }
 
   Future<void> getLocation() async {
@@ -197,102 +180,6 @@ class SearchEngine extends GetxController {
       //final response= dio.Response(requestOptions: null);
       //response.statusCode=987654;
       //return _;
-    }
-  }
-
-  Future<void> checkForUpdate() async {
-    await getServerVersion();
-    Version currentVersion = jsonToVersion(appVersion);
-    //int indexOfUpdate = -1;
-    latestVersion = (latestVersion ?? jsonToVersion("0.0.0"));
-    if (latestVersion! > currentVersion) {
-      List<UpdateVersion> tmpList = [];
-      for (int i = 0; i < releaseNotes.length; i++) {
-        if (currentVersion < jsonToVersion(releaseNotes[i].version)) {
-          tmpList.add(releaseNotes[i]);
-        }
-      }
-      releaseNotes = tmpList;
-      print("update is available");
-      await updateDialog(latestVersion!);
-    } else {
-      print("you are up to date");
-    }
-  }
-
-  Future<void> getServerVersion() async {
-    String urlDone =
-        "https://storage.googleapis.com/anime-293309.appspot.com/SyamiV0.json?avoidTheCaches=1";
-    dio.Response response = await loadLink(urlDone);
-    //print(response.data);
-    List<dynamic>? jsonResponse = [];
-    if (response.statusCode == 200) {
-      jsonResponse = response.data;
-      //print(jsonResponse);
-      releaseNotes = [];
-      for (int j = 0; j < jsonResponse!.length; j++) {
-        releaseNotes.add(UpdateVersion(
-            version: jsonResponse[j]["Version"],
-            description: jsonResponse[j]["Release Notes"]));
-        // add every element you get to be able to show it to the user
-      }
-      latestVersion = jsonToVersion(jsonResponse[0]["Version"]);
-    } else {
-      print("Request failed with status: ${response.statusCode}.");
-    }
-  }
-
-  Future<void> getServerVersionWindows() async {
-    String urlDone =
-        "https://storage.googleapis.com/anime-293309.appspot.com/SyamiV1.json?avoidTheCaches=1";
-    dio.Response response = await loadLink(urlDone);
-    List<dynamic>? jsonResponse = [];
-    //print(response.data);
-    if (response.statusCode == 200) {
-      jsonResponse = response.data;
-      //print(jsonResponse);
-      releaseNotes = [];
-      for (int j = 0; j < jsonResponse!.length; j++) {
-        releaseNotes.add(UpdateVersion(
-            version: jsonResponse[j]["Version"],
-            description: jsonResponse[j]["Release Notes"]));
-        // add every element you get to be able to show it to the user
-      }
-      latestVersion = jsonToVersion(jsonResponse[0]["Version"]);
-    } else {
-      print("Request failed with status: ${response.statusCode}.");
-    }
-  }
-
-  void launchDownloadLink() {
-    String url = "";
-    if (GetPlatform.isAndroid) {
-      url = 'https://storage.googleapis.com/anime-293309.appspot.com/Syami.apk';
-      //await checkForUpdate();
-    }
-    if (GetPlatform.isWindows) {
-      url = 'https://storage.googleapis.com/anime-293309.appspot.com/Syami.exe';
-    }
-    launchURL(url);
-  }
-
-  Future<void> checkForUpdateWindows() async {
-    await getServerVersionWindows();
-    Version currentVersion = jsonToVersion(appVersion);
-    //int indexOfUpdate = -1;
-    latestVersion = (latestVersion ?? jsonToVersion("0.0.0"));
-    if (latestVersion! > currentVersion) {
-      List<UpdateVersion> tmpList = [];
-      for (int i = 0; i < releaseNotes.length; i++) {
-        if (currentVersion < jsonToVersion(releaseNotes[i].version)) {
-          tmpList.add(releaseNotes[i]);
-        }
-      }
-      releaseNotes = tmpList;
-      print("update is available");
-      await updateDialog(latestVersion!);
-    } else {
-      print("you are up to date");
     }
   }
 

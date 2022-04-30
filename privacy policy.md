@@ -10,6 +10,9 @@ All location data  is stored on your device only, and can be simply erased by cl
 If you find any security vulnerability that has been inadvertently caused by me, or have any question regarding how the app protectes your privacy, please send me an email and I will surely try to fix it/help you.
 
 Yours sincerely,
+
 Abdelaziz Mahdy.
+
 cairo, Egypt.
-zezoh3358@gmail.com
+
+zcreations00@gmail.com

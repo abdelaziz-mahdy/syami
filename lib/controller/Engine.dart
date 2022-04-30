@@ -20,17 +20,20 @@ import 'package:window_manager/window_manager.dart';
 import 'package:geocoding/geocoding.dart';
 
 class SearchEngine extends GetxController {
-  late Catcher catcher;
+  /*late Catcher catcher;
 
   SearchEngine(Catcher catcher2) {
     catcher = catcher2;
   }
 
+   */
+
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.5";
+  String appVersion = "1.0.6";
   List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;
+  RxBool appLoaded = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
 
@@ -38,8 +41,62 @@ class SearchEngine extends GetxController {
   late dio.Dio dioInter;
 
   Version? latestVersion;
-  List<DayPrayer> userPrayer = [];
-  List<DayPrayer> meccaPrayer = [];
+  RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
+  RxList<DayPrayer> meccaPrayer = RxList<DayPrayer>();
+  int monthLoaded = 0;
+  @override
+  void dispose() {
+    //  flutterWebviewPlugin.dispose();
+    // _onStateChanged.cancel();
+    super.dispose();
+  }
+
+  @override
+  Future<void> onReady() async {
+    //Size windowSize = await windowManager.getSize();
+    if (GetPlatform.isWindows) {
+      await windowManager.ensureInitialized();
+      await windowManager.setMinimumSize(const Size(600, 600));
+
+      //windowManager.getSize().asStream().listen((event) {
+      //print(event);
+      //});
+    }
+
+    await initScreenUtil();
+
+    //setCatcherLogsPath();
+
+    dioInter = dio.Dio();
+    (dioInter.httpClientAdapter as DefaultHttpClientAdapter)
+        .onHttpClientCreate = (HttpClient client) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
+    dioInter.options.connectTimeout = 5 * 1000;
+    dioInter.interceptors.add(RetryInterceptor(
+      dio: dioInter,
+      logPrint: print,
+      // specify log function (optional)
+      onRetry: (e) {
+        loadingState.value = StringConstants.loadingLinkError;
+      },
+      retries: 3,
+      // retry count (optional)
+      retryDelays: const [
+        // set delays between retries (optional)
+        Duration(seconds: 1), // wait 1 sec before first retry
+        Duration(seconds: 2), // wait 2 sec before second retry
+        Duration(seconds: 3), // wait 3 sec before third retry
+      ],
+    ));
+    getPrayerTimes(monthLoaded);
+    //update();
+    afterLoading();
+    appLoaded.value = true;
+  }
+
   Future<void> afterLoading() async {
     print("checkForUpdate()");
     //print(await determinePosition());
@@ -81,7 +138,6 @@ class SearchEngine extends GetxController {
   }
 
   Future<dynamic> getApiForPosition(Position pos) async {
-    loadingState.value = "Getting Prayer Times";
     List<dynamic>? jsonResponse = [];
     String urlDone = serverUrlApi +
         "calendar?latitude=${pos.latitude}&longitude=${pos.longitude}";
@@ -227,59 +283,22 @@ class SearchEngine extends GetxController {
     }
   }
 
-  @override
-  void dispose() {
-    //  flutterWebviewPlugin.dispose();
-    // _onStateChanged.cancel();
-    super.dispose();
-  }
+  Future<void> getPrayerTimes(int month, {bool getNewLocation = false}) async {
+    int todayDay = (DateTime.now()).day;
+    int todayMonth = (DateTime.now()).month;
+    if (month == 0) {}
+    loadingState.value = "Getting your location";
+    Position userPos = await determinePosition(getNew: getNewLocation);
+    Map<String, String> location = await getCityFromPosition(userPos);
+    print(location);
+    city.value = location["city"] ?? "Unknown";
+    country.value = location["country"] ?? "Unknown";
 
-  @override
-  Future<void> onReady() async {
-    //Size windowSize = await windowManager.getSize();
-    if (GetPlatform.isWindows) {
-      await windowManager.ensureInitialized();
-      await windowManager.setMinimumSize(const Size(600, 600));
+    loadingState.value = "Getting prayer times for " +
+        (city.value == "Unknown" || city.value == ""
+            ? country.value
+            : city.value);
 
-      //windowManager.getSize().asStream().listen((event) {
-      //print(event);
-      //});
-    }
-
-    await initScreenUtil();
-
-    setCatcherLogsPath();
-
-    dioInter = dio.Dio();
-    (dioInter.httpClientAdapter as DefaultHttpClientAdapter)
-        .onHttpClientCreate = (HttpClient client) {
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-      return client;
-    };
-    dioInter.options.connectTimeout = 5 * 1000;
-    dioInter.interceptors.add(RetryInterceptor(
-      dio: dioInter,
-      logPrint: print,
-      // specify log function (optional)
-      onRetry: (e) {
-        loadingState.value = StringConstants.loadingLinkError;
-      },
-      retries: 3,
-      // retry count (optional)
-      retryDelays: const [
-        // set delays between retries (optional)
-        Duration(seconds: 1), // wait 1 sec before first retry
-        Duration(seconds: 2), // wait 2 sec before second retry
-        Duration(seconds: 3), // wait 3 sec before third retry
-      ],
-    ));
-    getPrayerTimes();
-    update();
-    afterLoading();
-  }
-
-  Future<void> getPrayerTimes() async {
     Position MeccaPos = const Position(
         speedAccuracy: 0,
         heading: 0,
@@ -289,8 +308,8 @@ class SearchEngine extends GetxController {
         latitude: 21.422510,
         timestamp: null,
         accuracy: 0);
-    int todayDay = (DateTime.now()).day;
-    int todayMonth = (DateTime.now()).month;
+
+    //loadingState.value = "Getting Prayer Times for mecca";
     var meccaPrayerTimes = await getApiForPosition(MeccaPos);
 
     for (int i = 0; i < meccaPrayerTimes.length; i++) {
@@ -310,19 +329,10 @@ class SearchEngine extends GetxController {
           meccaPrayer.add(dayPrayer);
         }
       } else {
-        if (dayPrayer.date.month >= todayMonth ||
-            dayPrayer.date.day >= todayDay) {
-          meccaPrayer.add(dayPrayer);
-        }
+        meccaPrayer.add(dayPrayer);
       }
     }
     print("meccaPrayerTimes" + meccaPrayerTimes.toString());
-    Position userPos = await determinePosition();
-    Map<String, String> location = await getCityFromPosition(userPos);
-    print(location);
-    city.value = location["city"] ?? "Unknown";
-    country.value = location["country"] ?? "Unknown";
-
     var userPrayerTimes = await getApiForPosition(userPos);
 
     for (int i = 0; i < userPrayerTimes.length; i++) {
@@ -342,10 +352,7 @@ class SearchEngine extends GetxController {
           userPrayer.add(dayPrayer);
         }
       } else {
-        if (dayPrayer.date.month >= todayMonth ||
-            dayPrayer.date.day >= todayDay) {
-          userPrayer.add(dayPrayer);
-        }
+        userPrayer.add(dayPrayer);
       }
     }
     if (meccaPrayer[0].date != userPrayer[0].date) {
@@ -354,7 +361,7 @@ class SearchEngine extends GetxController {
     update();
     print("userPrayerTimes" + userPrayerTimes.toString());
   }
-
+/*
   setCatcherLogsPath() async {
     CatcherOptions debugOptions = CatcherOptions(SilentReportMode(), [
       FileHandler(
@@ -378,9 +385,8 @@ class SearchEngine extends GetxController {
           enableStackTrace: true,
           handleWhenRejected: false)
     ]);
-    catcher.updateConfig(
-        debugConfig: debugOptions, releaseConfig: releaseOptions);
-  }
+    catcher.updateConfig(debugConfig: debugOptions, releaseConfig: releaseOptions);
+  }*/
 
   Version jsonToVersion(String? response) {
     //print(response);

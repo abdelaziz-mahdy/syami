@@ -2,6 +2,8 @@
 
 Calcuates the Fasting in foregin countries to match it to mecca
 
+used in a places with long duration of fasting 
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

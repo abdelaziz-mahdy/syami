@@ -153,7 +153,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                   borderRadius:
                       BorderRadius.circular(StringConstants.cornersSettings)),
-              child: CustomText(_.loadingState.value),
+              child: _.loadingState.value == StringConstants.loadingLinkError
+                  ? Row(
+                      children: [
+                        Expanded(
+                            child: CustomAutoSizeText(_.loadingState.value)),
+                        Expanded(
+                          child: CustomButton(
+                              primary: Colors.green, // background
+                              onPrimary: Colors.white, // foreground
+                              child: const CustomAutoSizeText(
+                                "Retry Again",
+                              ),
+                              onPressed: () {
+                                _.getPrayerTimes();
+                              }),
+                        ),
+                      ],
+                    )
+                  : CustomAutoSizeText(_.loadingState.value),
             ),
           );
         }

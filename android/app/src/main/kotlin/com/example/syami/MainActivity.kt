@@ -1,4 +1,4 @@
-package com.example.syami
+package com.zcreations.syami
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.example.syami",
+  "applicationId": "com.zcreations.syami",
   "variantName": "processReleaseResources",
   "elements": [
     {

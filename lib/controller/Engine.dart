@@ -29,11 +29,12 @@ class SearchEngine extends GetxController {
    */
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.6";
+  String appVersion = "1.0.8";
   List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;
   RxBool appLoaded = false.obs;
+  RxBool loadingFailed = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
   RefreshController listRefresher = RefreshController(initialRefresh: false);
@@ -102,10 +103,11 @@ class SearchEngine extends GetxController {
         Duration(seconds: 3), // wait 3 sec before third retry
       ],
     ));
-    getPrayerTimes(month: monthLoaded);
+    appLoaded.value = true;
+    await getPrayerTimes(month: monthLoaded);
+
     //update();
     //afterLoading();
-    appLoaded.value = true;
   }
 
   Future<void> getLocation() async {
@@ -283,6 +285,10 @@ class SearchEngine extends GetxController {
     }
     //update();
     print("userPrayerTimes" + userPrayerTimes.toString());
+
+    if (userPrayer.length < 5) {
+      await getPrayerTimes(month: monthLoaded + 1);
+    }
   }
 
   Future<void> loadMoreMonth() async {

@@ -72,15 +72,12 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      backgroundColor: Colors.grey[500],
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(
           widget.title,
-          style: const TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.black,
       ),
       body: GetX<SearchEngine>(builder: (_) {
         if (!_.appLoaded.value) {
@@ -88,10 +85,8 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.all(7),
             margin: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-                color: Colors.black,
                 boxShadow: const [
                   BoxShadow(
-                    color: Colors.black,
                     blurRadius: 3.0,
                     spreadRadius: 0.0,
                     offset: Offset(2.0, 2.0), // shadow direction: bottom right
@@ -111,10 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.all(7),
               margin: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                  color: Colors.black,
                   boxShadow: const [
                     BoxShadow(
-                      color: Colors.black,
                       blurRadius: 3.0,
                       spreadRadius: 0.0,
                       offset:
@@ -157,10 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.all(7),
                     margin: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                        color: Colors.black,
                         boxShadow: const [
                           BoxShadow(
-                            color: Colors.black,
                             blurRadius: 3.0,
                             spreadRadius: 0.0,
                             offset: Offset(
@@ -188,7 +179,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               },
                               icon: const Icon(
                                 Icons.refresh,
-                                color: Colors.white,
                               ))
                         ])),
               );
@@ -210,9 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   footer: const ClassicFooter(
                     loadingIcon: CircularProgressIndicator(
                       strokeWidth: 2.0,
-                      color: Colors.black,
                     ),
-                    textStyle: TextStyle(color: Colors.black),
                   ),
                   onLoading: () {
                     _.loadMoreMonth();
@@ -232,10 +220,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(7),
                             margin: const EdgeInsets.only(left: 7, right: 7),
                             decoration: BoxDecoration(
-                                color: Colors.black,
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Colors.black,
                                     blurRadius: 3.0,
                                     spreadRadius: 0.0,
                                     offset: Offset(2.0,
@@ -275,10 +261,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(15),
                             margin: const EdgeInsets.only(left: 7, right: 7),
                             decoration: BoxDecoration(
-                                color: Colors.black,
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Colors.black,
                                     blurRadius: 3.0,
                                     spreadRadius: 0.0,
                                     offset: Offset(2.0,
@@ -326,7 +310,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                           TableBorder.all(color: Colors.white),
                                       // Allows to add a border decoration around your table
                                       children: [
-                                        const TableRow(children: [
+                                        TableRow(
+                                            children: [
                                           Center(
                                               child: CustomAutoSizeText(
                                             "Fajr",
@@ -347,8 +332,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                               child: CustomAutoSizeText(
                                             'Isha',
                                           )),
-                                        ]),
-                                        TableRow(children: [
+                                        ]
+                                                .map((e) => Padding(
+                                                    padding:
+                                                        EdgeInsets.all(5.0),
+                                                    child: e))
+                                                .toList()),
+                                        TableRow(
+                                            children: [
                                           Center(
                                             child: CustomAutoSizeText(
                                               formatter.format(
@@ -379,7 +370,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                                   _.meccaPrayer[index].isha),
                                             ),
                                           ),
-                                        ]),
+                                        ]
+                                                .map((e) => Padding(
+                                                    padding:
+                                                        EdgeInsets.all(5.0),
+                                                    child: e))
+                                                .toList()),
                                       ]),
                                 ),
                                 Padding(
@@ -397,7 +393,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                           TableBorder.all(color: Colors.white),
                                       // Allows to add a border decoration around your table
                                       children: [
-                                        const TableRow(children: [
+                                        TableRow(
+                                            children: [
                                           Center(
                                               child: CustomAutoSizeText(
                                             "Fajr",
@@ -418,8 +415,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                               child: CustomAutoSizeText(
                                             'Isha',
                                           )),
-                                        ]),
-                                        TableRow(children: [
+                                        ]
+                                                .map((e) => Padding(
+                                                    padding:
+                                                        EdgeInsets.all(5.0),
+                                                    child: e))
+                                                .toList()),
+                                        TableRow(
+                                            children: [
                                           Center(
                                             child: CustomAutoSizeText(
                                               formatter.format(
@@ -450,7 +453,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                                   _.userPrayer[index].isha),
                                             ),
                                           ),
-                                        ]),
+                                        ]
+                                                .map((e) => Padding(
+                                                    padding:
+                                                        EdgeInsets.all(5.0),
+                                                    child: e))
+                                                .toList()),
                                       ]),
                                 ),
                                 Padding(
@@ -459,7 +467,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                     children: [
                                       const Expanded(
                                         child: CustomAutoSizeText(
-                                            "Mecca Fasting Duration "),
+                                          "Mecca Fasting Duration ",
+                                          center: false,
+                                        ),
                                       ),
                                       Expanded(
                                           child: CustomAutoSizeText(
@@ -475,7 +485,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                     children: [
                                       Expanded(
                                         child: CustomAutoSizeText(
-                                            "${_.city.value} Fasting Duration "),
+                                          "${_.city.value} Fasting Duration ",
+                                          center: false,
+                                        ),
                                       ),
                                       Expanded(
                                           child: CustomAutoSizeText(
@@ -493,6 +505,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         flex: 3,
                                         child: CustomAutoSizeText(
                                           "${_.city.value} iftar based on mecca duration ",
+                                          center: false,
                                           maxLines: 3,
                                         ),
                                       ),

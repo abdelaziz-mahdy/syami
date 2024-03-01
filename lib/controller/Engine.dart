@@ -1,23 +1,18 @@
-import 'dart:io';
-import 'dart:ui';
+import 'dart:async';
 
-import 'package:catcher/catcher.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:path/path.dart';
-import 'package:dio/adapter.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:dio/dio.dart' as dio;
-import 'package:path_provider/path_provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:syami/constants/String%20constants.dart';
+import 'package:syami/constants/string_constants.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
 import 'package:version/version.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:geocoding/geocoding.dart';
 
 class SearchEngine extends GetxController {
   /*late Catcher catcher;
@@ -29,8 +24,6 @@ class SearchEngine extends GetxController {
    */
 
   String serverUrlApi = "http://api.aladhan.com/v1/";
-  String appVersion = "1.0.8";
-  List<UpdateVersion> releaseNotes = [];
 
   RxString loadingState = "".obs;
   RxBool appLoaded = false.obs;
@@ -47,14 +40,16 @@ class SearchEngine extends GetxController {
   RxList<DayPrayer> meccaPrayer = RxList<DayPrayer>();
   int monthLoaded = 0;
   int yearLoaded = 0;
-  Position meccaPosition = const Position(
+  Position meccaPosition = Position(
       speedAccuracy: 0,
       heading: 0,
       longitude: 39.826168,
       speed: 0,
       altitude: 0,
       latitude: 21.422510,
-      timestamp: null,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+      timestamp: DateTime.now(),
       accuracy: 0);
   Position? userPosition;
   @override
@@ -80,20 +75,11 @@ class SearchEngine extends GetxController {
     //setCatcherLogsPath();
 
     dioInter = dio.Dio();
-    (dioInter.httpClientAdapter as DefaultHttpClientAdapter)
-        .onHttpClientCreate = (HttpClient client) {
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-      return client;
-    };
-    dioInter.options.connectTimeout = 5 * 1000;
+    dioInter.options.connectTimeout = const Duration(seconds: 5);
     dioInter.interceptors.add(RetryInterceptor(
       dio: dioInter,
       logPrint: print,
-      // specify log function (optional)
-      onRetry: (e) {
-        loadingState.value = StringConstants.loadingLinkError;
-      },
+      retryEvaluator: myRetryEvaluator,
       retries: 3,
       // retry count (optional)
       retryDelays: const [
@@ -110,35 +96,17 @@ class SearchEngine extends GetxController {
     //afterLoading();
   }
 
-  Future<void> getLocation() async {
-    loadingState.value = "Getting Location";
-    Map<String, String> location =
-        await getCityFromPosition(await determinePosition());
-    print(location);
-    await getApiForLocation(location["city"]!, location["country"]!);
-    print("###########################");
-  }
+  FutureOr<bool> myRetryEvaluator(DioException error, int attempt) {
+    loadingState.value = StringConstants.loadingLinkError;
 
-//https://api.aladhan.com/v1/calendar?latitude=51.508515&longitude=-0.1254872
-  Future<void> getApiForLocation(String city, String country) async {
-    loadingState.value = "Getting Prayer Times";
-    List<dynamic>? jsonResponse = [];
-    String urlDone =
-        serverUrlApi + "calendarByCity?city=$city&country=$country";
-    dio.Response response = await loadLink(urlDone);
-    //print(response.data);
-    if (response.statusCode == 200) {
-      //print(response.data);
-      jsonResponse = response.data["data"];
-
-      //print(jsonResponse);
-    }
+    // here your retry interception logic
+    return RetryInterceptor.defaultRetryEvaluator(error, attempt);
   }
 
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
     List<dynamic>? jsonResponse = [];
-    String urlDone = serverUrlApi +
-        "calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year";
+    String urlDone =
+        "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year";
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
     if (response.statusCode == 200) {
@@ -170,8 +138,8 @@ class SearchEngine extends GetxController {
             receiveDataWhenStatusError: true,
           ));
     } catch (_) {
-      print("loadLink " + _.toString());
-      if (_ is dio.DioError) {
+      print("loadLink $_");
+      if (_ is dio.DioException) {
         return _.response ??
             dio.Response(
                 requestOptions: dio.RequestOptions(path: ''), statusCode: 1);
@@ -224,10 +192,8 @@ class SearchEngine extends GetxController {
       await getUserLocation(getNewLocation: getNewLocation);
     }
 
-    loadingState.value = "Getting prayer times for " +
-        (city.value == "Unknown" || city.value == ""
-            ? country.value
-            : city.value);
+    loadingState.value =
+        "Getting prayer times for ${city.value == "Unknown" || city.value == "" ? country.value : city.value}";
 
     var userPrayerTimes = await getApiForPosition(
         userPosition!, monthToGetTimesOn, yearToGetTimesOn);
@@ -276,7 +242,7 @@ class SearchEngine extends GetxController {
         meccaPrayer.add(dayPrayer);
       }
     }
-    print("meccaPrayerTimes" + meccaPrayerTimes.toString());
+    print("meccaPrayerTimes$meccaPrayerTimes");
 
     yearLoaded = yearToGetTimesOn;
     monthLoaded = monthToGetTimesOn;
@@ -284,7 +250,7 @@ class SearchEngine extends GetxController {
       print("DATES ARE NOT ALIGNED");
     }
     //update();
-    print("userPrayerTimes" + userPrayerTimes.toString());
+    print("userPrayerTimes$userPrayerTimes");
 
     if (userPrayer.length < 5) {
       await getPrayerTimes(month: monthLoaded + 1);
@@ -322,24 +288,7 @@ class SearchEngine extends GetxController {
     catcher.updateConfig(debugConfig: debugOptions, releaseConfig: releaseOptions);
   }*/
 
-  Version jsonToVersion(String? response) {
-    //print(response);
-    return (Version.parse(response));
-  }
-
   Future<void> initScreenUtil() async {
-    double? width;
-    double? height;
-    //print("width:${Get.width} ,,, height:${Get.height} ");
-
-    if (MediaQuery.of(Get.context!).orientation == Orientation.portrait ||
-        Platform.isWindows) {
-      height = Get.height;
-      width = Get.width;
-    } else {
-      height = Get.width;
-      width = Get.height;
-    }
     ScreenUtil.init(
         /*
         BoxConstraints(
@@ -349,8 +298,7 @@ class SearchEngine extends GetxController {
 
        */
         Get.context!,
-        designSize: Size(411.42857142857144, 683.4285714285714),
-        orientation: Orientation.portrait,
+        designSize: const Size(411.42857142857144, 683.4285714285714),
         minTextAdapt: true);
     update();
   }

@@ -11,8 +11,6 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/string_constants.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
-import 'package:version/version.dart';
-import 'package:window_manager/window_manager.dart';
 
 class SearchEngine extends GetxController {
   /*late Catcher catcher;
@@ -35,7 +33,6 @@ class SearchEngine extends GetxController {
   dio.CancelToken token = dio.CancelToken();
   late dio.Dio dioInter;
 
-  Version? latestVersion;
   RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
   RxList<DayPrayer> meccaPrayer = RxList<DayPrayer>();
   int monthLoaded = 0;
@@ -61,15 +58,6 @@ class SearchEngine extends GetxController {
 
   @override
   Future<void> onReady() async {
-    //Size windowSize = await windowManager.getSize();
-    if (GetPlatform.isWindows) {
-      await windowManager.ensureInitialized();
-      await windowManager.setMinimumSize(const Size(600, 600));
-      //windowManager.getSize().asStream().listen((event) {
-      //print(event);
-      //});
-    }
-
     await initScreenUtil();
 
     //setCatcherLogsPath();

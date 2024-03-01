@@ -18,8 +18,6 @@ class StringConstants {
   static Color dialogColor = Colors.grey.shade800;
   static Color messagesColor = Colors.grey.shade900;
   static Color videoPlayerButtonsColor = Colors.black45;
-
-
 }
 
 class CustomAutoSizeText extends StatelessWidget {

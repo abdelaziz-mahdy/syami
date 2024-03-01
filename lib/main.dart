@@ -335,7 +335,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        const EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(
+                                                            5.0),
                                                     child: e))
                                                 .toList()),
                                         TableRow(
@@ -373,7 +374,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        const EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(
+                                                            5.0),
                                                     child: e))
                                                 .toList()),
                                       ]),
@@ -418,7 +420,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        const EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(
+                                                            5.0),
                                                     child: e))
                                                 .toList()),
                                         TableRow(
@@ -456,7 +459,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        const EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(
+                                                            5.0),
                                                     child: e))
                                                 .toList()),
                                       ]),

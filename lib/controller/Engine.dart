@@ -103,31 +103,6 @@ class SearchEngine extends GetxController {
     return RetryInterceptor.defaultRetryEvaluator(error, attempt);
   }
 
-  Future<void> getLocation() async {
-    loadingState.value = "Getting Location";
-    Map<String, String> location =
-        await getCityFromPosition(await determinePosition());
-    print(location);
-    await getApiForLocation(location["city"]!, location["country"]!);
-    print("###########################");
-  }
-
-//https://api.aladhan.com/v1/calendar?latitude=51.508515&longitude=-0.1254872
-  Future<void> getApiForLocation(String city, String country) async {
-    loadingState.value = "Getting Prayer Times";
-    List<dynamic>? jsonResponse = [];
-    String urlDone =
-        "${serverUrlApi}calendarByCity?city=$city&country=$country";
-    dio.Response response = await loadLink(urlDone);
-    //print(response.data);
-    if (response.statusCode == 200) {
-      //print(response.data);
-      jsonResponse = response.data["data"];
-
-      //print(jsonResponse);
-    }
-  }
-
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
     List<dynamic>? jsonResponse = [];
     String urlDone =
@@ -164,7 +139,7 @@ class SearchEngine extends GetxController {
           ));
     } catch (_) {
       print("loadLink $_");
-      if (_ is dio.DioError) {
+      if (_ is dio.DioException) {
         return _.response ??
             dio.Response(
                 requestOptions: dio.RequestOptions(path: ''), statusCode: 1);

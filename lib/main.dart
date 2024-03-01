@@ -312,30 +312,30 @@ class _MyHomePageState extends State<MyHomePage> {
                                       children: [
                                         TableRow(
                                             children: [
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             "Fajr",
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Dhuhr',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Asr',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Maghrib',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Isha',
                                           )),
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(5.0),
                                                     child: e))
                                                 .toList()),
                                         TableRow(
@@ -373,7 +373,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(5.0),
                                                     child: e))
                                                 .toList()),
                                       ]),
@@ -395,30 +395,30 @@ class _MyHomePageState extends State<MyHomePage> {
                                       children: [
                                         TableRow(
                                             children: [
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             "Fajr",
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Dhuhr',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Asr',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Maghrib',
                                           )),
-                                          Center(
+                                          const Center(
                                               child: CustomAutoSizeText(
                                             'Isha',
                                           )),
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(5.0),
                                                     child: e))
                                                 .toList()),
                                         TableRow(
@@ -456,7 +456,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ]
                                                 .map((e) => Padding(
                                                     padding:
-                                                        EdgeInsets.all(5.0),
+                                                        const EdgeInsets.all(5.0),
                                                     child: e))
                                                 .toList()),
                                       ]),

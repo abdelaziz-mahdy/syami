@@ -19,9 +19,7 @@ class StringConstants {
   static Color messagesColor = Colors.grey.shade900;
   static Color videoPlayerButtonsColor = Colors.black45;
 
-////////////////////////////////////////////////////////////
-  static const SECRET_KEY = "2020_PRIVATES_KEYS_ENCRYPTS_2020";
-//////////////////////////////////////////////////////////////////
+
 }
 
 class CustomAutoSizeText extends StatelessWidget {

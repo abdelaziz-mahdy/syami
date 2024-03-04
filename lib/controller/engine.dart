@@ -13,19 +13,10 @@ import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
 
 class SearchEngine extends GetxController {
-  /*late Catcher catcher;
-
-  SearchEngine(Catcher catcher2) {
-    catcher = catcher2;
-  }
-
-   */
-
   String serverUrlApi = "http://api.aladhan.com/v1/";
 
-  RxString loadingState = "".obs;
+  Rx<String> loadingState = Rx<String>("");
   RxBool appLoaded = false.obs;
-  RxBool loadingFailed = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
   RefreshController listRefresher = RefreshController(initialRefresh: false);
@@ -35,8 +26,7 @@ class SearchEngine extends GetxController {
 
   RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
   RxList<DayPrayer> meccaPrayer = RxList<DayPrayer>();
-  int monthLoaded = 0;
-  int yearLoaded = 0;
+
   Position meccaPosition = Position(
       speedAccuracy: 0,
       heading: 0,
@@ -67,7 +57,6 @@ class SearchEngine extends GetxController {
     dioInter.interceptors.add(RetryInterceptor(
       dio: dioInter,
       logPrint: print,
-      retryEvaluator: myRetryEvaluator,
       retries: 3,
       // retry count (optional)
       retryDelays: const [
@@ -78,23 +67,17 @@ class SearchEngine extends GetxController {
       ],
     ));
     appLoaded.value = true;
-    await getPrayerTimes(month: monthLoaded);
+    await getPrayerTimes();
 
     //update();
     //afterLoading();
-  }
-
-  FutureOr<bool> myRetryEvaluator(DioException error, int attempt) {
-    loadingState.value = StringConstants.loadingLinkError;
-
-    // here your retry interception logic
-    return RetryInterceptor.defaultRetryEvaluator(error, attempt);
   }
 
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
     List<dynamic>? jsonResponse = [];
     String urlDone =
         "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year";
+    print(urlDone);
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
     if (response.statusCode == 200) {
@@ -110,35 +93,20 @@ class SearchEngine extends GetxController {
     Map<String, String>? param,
     Map<String, String>? headers,
   }) async {
-    try {
-      /*
+    /*
     dio.BaseOptions(
 
         headers: headers,
         connectTimeout: 5000,
         followRedirects: true,
         receiveDataWhenStatusError: true,*/
-      return await dioInter.get(url!,
-          queryParameters: param,
-          options: dio.Options(
-            headers: headers,
-            followRedirects: true,
-            receiveDataWhenStatusError: true,
-          ));
-    } catch (_) {
-      print("loadLink $_");
-      if (_ is dio.DioException) {
-        return _.response ??
-            dio.Response(
-                requestOptions: dio.RequestOptions(path: ''), statusCode: 1);
-      } else {
-        return dio.Response(
-            requestOptions: dio.RequestOptions(path: ''), statusCode: 1);
-      }
-      //final response= dio.Response(requestOptions: null);
-      //response.statusCode=987654;
-      //return _;
-    }
+    return await dioInter.get(url!,
+        queryParameters: param,
+        options: dio.Options(
+          headers: headers,
+          followRedirects: true,
+          receiveDataWhenStatusError: true,
+        ));
   }
 
   Future<void> getUserLocation({bool getNewLocation = false}) async {
@@ -150,142 +118,107 @@ class SearchEngine extends GetxController {
     country.value = location["country"] ?? "Unknown";
   }
 
-  Future<void> getPrayerTimes(
-      {int month = 0, bool getNewLocation = false}) async {
-    DateTime nowTime = (DateTime.now());
-    int todayDay = nowTime.day;
-    int todayMonth = nowTime.month;
-    int todayYear = nowTime.year;
-    int monthToGetTimesOn = 0;
-    int yearToGetTimesOn = 0;
-    if (yearLoaded == 0) {
-      yearToGetTimesOn = todayYear;
-      yearLoaded = todayYear;
+  Future<void> getPrayerTimes({bool getNewLocation = false}) async {
+    try {
+      // Clear data if fetching for a new location
+      if (getNewLocation) {
+        userPrayer.clear();
+        meccaPrayer.clear();
+      }
+      int month, year;
+      (month, year) = getNextMonthAndYearFromPrayers(userPrayer);
+      // Fetch user location if needed
+      if (userPosition == null || getNewLocation) {
+        await getUserLocation(getNewLocation: getNewLocation);
+      }
+
+      loadingState.value =
+          "Getting prayer times for ${city.value == "Unknown" || city.value.isEmpty ? country.value : city.value}";
+
+      // Fetch prayer times
+      var userPrayerTimes = await getApiForPosition(userPosition!, month, year);
+      var meccaPrayerTimes =
+          await getApiForPosition(meccaPosition, month, year);
+
+      processPrayerTimes(userPrayerTimes, userPrayer);
+      processPrayerTimes(meccaPrayerTimes, meccaPrayer);
+
+      // Check for date alignment
+      if (meccaPrayer.isNotEmpty &&
+          userPrayer.isNotEmpty &&
+          meccaPrayer[0].date != userPrayer[0].date) {
+        print("DATES ARE NOT ALIGNED");
+      }
+
+      // Check if further pagination is needed
+      if (userPrayer.length < 5) {
+        await getPrayerTimes();
+      }
+    } catch (e) {
+      loadingState.value = e.toString();
     }
-    if (month == 0) {
-      monthToGetTimesOn = todayMonth;
+  }
+
+  void processPrayerTimes(
+      List<dynamic> prayerTimes, List<DayPrayer> prayersList) {
+    for (var times in prayerTimes) {
+      DayPrayer dayPrayer = DayPrayer(
+        times["date"]["gregorian"]["date"],
+        times["date"]["gregorian"]["format"],
+        times["date"]["gregorian"]["weekday"]["en"],
+        times["timings"]["Fajr"],
+        times["timings"]["Dhuhr"],
+        times["timings"]["Asr"],
+        times["timings"]["Maghrib"],
+        times["timings"]["Isha"],
+      );
+
+      // Add prayer times for current and future dates
+      if (dayPrayer.date.month == DateTime.now().month) {
+        if (dayPrayer.date.day >= DateTime.now().day) {
+          prayersList.add(dayPrayer);
+        }
+      } else {
+        prayersList.add(dayPrayer);
+      }
+    }
+  }
+
+  (int month, int year) getNextMonthAndYearFromPrayers(
+      List<DayPrayer> prayers) {
+    if (prayers.isEmpty) {
+      // Handle the case where there are no prayers in the list
+      final now = DateTime.now();
+      // If no prayers, return the current month and year as is
+      return (now.month, now.year);
+    }
+
+    // Get the date of the last prayer in the list
+    DateTime lastDate = prayers.last.date;
+
+    int nextMonth;
+    int nextYear;
+
+    if (lastDate.month == 12) {
+      // If the last date is in December, increment the year and reset the month to January
+      nextMonth = 1;
+      nextYear = lastDate.year + 1;
     } else {
-      if (month > 12) {
-        monthToGetTimesOn = 1;
-        yearToGetTimesOn = yearLoaded + 1;
-      } else {
-        monthToGetTimesOn = month;
-      }
-    }
-    if (getNewLocation) {
-      userPrayer.clear();
-      meccaPrayer.clear();
-    }
-    if (userPosition == null || getNewLocation) {
-      await getUserLocation(getNewLocation: getNewLocation);
+      // Otherwise, just increment the month
+      nextMonth = lastDate.month + 1;
+      nextYear = lastDate.year;
     }
 
-    loadingState.value =
-        "Getting prayer times for ${city.value == "Unknown" || city.value == "" ? country.value : city.value}";
-
-    var userPrayerTimes = await getApiForPosition(
-        userPosition!, monthToGetTimesOn, yearToGetTimesOn);
-    var meccaPrayerTimes = await getApiForPosition(
-        meccaPosition, monthToGetTimesOn, yearToGetTimesOn);
-    for (int i = 0; i < userPrayerTimes.length; i++) {
-      DayPrayer dayPrayer = DayPrayer(
-        userPrayerTimes[i]["date"]["gregorian"]["date"],
-        userPrayerTimes[i]["date"]["gregorian"]["format"],
-        userPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
-        userPrayerTimes[i]["timings"]["Fajr"],
-        userPrayerTimes[i]["timings"]["Dhuhr"],
-        userPrayerTimes[i]["timings"]["Asr"],
-        userPrayerTimes[i]["timings"]["Maghrib"],
-        userPrayerTimes[i]["timings"]["Isha"],
-      );
-      //print();
-      if (dayPrayer.date.month == todayMonth) {
-        if (dayPrayer.date.day >= todayDay) {
-          userPrayer.add(dayPrayer);
-        }
-      } else {
-        userPrayer.add(dayPrayer);
-      }
-    }
-
-    //loadingState.value = "Getting Prayer Times for mecca";
-
-    for (int i = 0; i < meccaPrayerTimes.length; i++) {
-      DayPrayer dayPrayer = DayPrayer(
-        meccaPrayerTimes[i]["date"]["gregorian"]["date"],
-        meccaPrayerTimes[i]["date"]["gregorian"]["format"],
-        meccaPrayerTimes[i]["date"]["gregorian"]["weekday"]["en"],
-        meccaPrayerTimes[i]["timings"]["Fajr"],
-        meccaPrayerTimes[i]["timings"]["Dhuhr"],
-        meccaPrayerTimes[i]["timings"]["Asr"],
-        meccaPrayerTimes[i]["timings"]["Maghrib"],
-        meccaPrayerTimes[i]["timings"]["Isha"],
-      );
-      //print();
-      if (dayPrayer.date.month == todayMonth) {
-        if (dayPrayer.date.day >= todayDay) {
-          meccaPrayer.add(dayPrayer);
-        }
-      } else {
-        meccaPrayer.add(dayPrayer);
-      }
-    }
-    print("meccaPrayerTimes$meccaPrayerTimes");
-
-    yearLoaded = yearToGetTimesOn;
-    monthLoaded = monthToGetTimesOn;
-    if (meccaPrayer[0].date != userPrayer[0].date) {
-      print("DATES ARE NOT ALIGNED");
-    }
-    //update();
-    print("userPrayerTimes$userPrayerTimes");
-
-    if (userPrayer.length < 5) {
-      await getPrayerTimes(month: monthLoaded + 1);
-    }
+    return (nextMonth, nextYear);
   }
 
   Future<void> loadMoreMonth() async {
-    await getPrayerTimes(month: monthLoaded + 1);
+    await getPrayerTimes();
     listRefresher.loadComplete();
   }
-/*
-  setCatcherLogsPath() async {
-    CatcherOptions debugOptions = CatcherOptions(SilentReportMode(), [
-      FileHandler(
-          File(
-              join((await getApplicationDocumentsDirectory()).path, "log.txt")),
-          printLogs: true),
-      ConsoleHandler(
-          enableApplicationParameters: true,
-          enableDeviceParameters: true,
-          enableCustomParameters: true,
-          enableStackTrace: true,
-          handleWhenRejected: false)
-    ]);
-    CatcherOptions releaseOptions = CatcherOptions(SilentReportMode(), [
-      FileHandler(File(
-          join((await getApplicationDocumentsDirectory()).path, "log.txt"))),
-      ConsoleHandler(
-          enableApplicationParameters: false,
-          enableDeviceParameters: false,
-          enableCustomParameters: false,
-          enableStackTrace: true,
-          handleWhenRejected: false)
-    ]);
-    catcher.updateConfig(debugConfig: debugOptions, releaseConfig: releaseOptions);
-  }*/
 
   Future<void> initScreenUtil() async {
-    ScreenUtil.init(
-        /*
-        BoxConstraints(
-            maxWidth: width, //new width
-            maxHeight: height //new height
-            ),
-
-       */
-        Get.context!,
+    ScreenUtil.init(Get.context!,
         designSize: const Size(411.42857142857144, 683.4285714285714),
         minTextAdapt: true);
     update();

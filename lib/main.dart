@@ -116,11 +116,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                   borderRadius:
                       BorderRadius.circular(StringConstants.cornersSettings)),
-              child: _.loadingState.value == StringConstants.loadingLinkError
+              child: _.loadingState.value == StringConstants.loadingLinkError ||
+                      _.loadingState.value.toLowerCase().contains("exception")
                   ? Row(
                       children: [
                         Expanded(
-                            child: CustomAutoSizeText(_.loadingState.value)),
+                            flex: 2,
+                            child: CustomAutoSizeText(
+                              _.loadingState.value,
+                              maxLines: 10,
+                            )),
                         Expanded(
                           child: CustomButton(
                               primary: Colors.green, // background

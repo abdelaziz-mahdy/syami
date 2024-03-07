@@ -1,26 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/string_constants.dart';
 import 'package:syami/controller/engine.dart';
 
-class SizeChangesListener with WidgetsBindingObserver {
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    Get.find<SearchEngine>().initScreenUtil();
-    //print('changed size');
-  }
-}
-
 //late Catcher catcher;
 void main() {
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    WidgetsBinding.instance.addObserver(SizeChangesListener());
-  }
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const MyApp());
 }
 
@@ -31,14 +22,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     Get.put(SearchEngine(), permanent: true);
 
-    return GetMaterialApp(
-      title: "Syami",
-      theme: ThemeData.dark(),
-      themeMode: ThemeMode.dark,
-      //initialRoute: "MyHomePage",
+    return ScreenUtilInit(
+      designSize: const Size(360, 690),
+      child: GetMaterialApp(
+        title: "Syami",
+        theme: ThemeData.dark(),
+        themeMode: ThemeMode.dark,
+        //initialRoute: "MyHomePage",
 
-      home: const MyHomePage(
-        title: 'Syami',
+        home: const MyHomePage(
+          title: 'Syami',
+        ),
       ),
     );
   }
@@ -118,25 +112,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       BorderRadius.circular(StringConstants.cornersSettings)),
               child: _.loadingState.value == StringConstants.loadingLinkError ||
                       _.loadingState.value.toLowerCase().contains("exception")
-                  ? Row(
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                            flex: 2,
-                            child: CustomAutoSizeText(
-                              _.loadingState.value,
-                              maxLines: 10,
-                            )),
-                        Expanded(
-                          child: CustomButton(
-                              primary: Colors.green, // background
-                              onPrimary: Colors.white, // foreground
-                              child: const CustomAutoSizeText(
-                                "Retry Again",
-                              ),
-                              onPressed: () {
-                                _.getPrayerTimes();
-                              }),
+                        CustomAutoSizeText(
+                          _.loadingState.value
+                                  .toLowerCase()
+                                  .startsWith("exception:")
+                              ? _.loadingState.value
+                                  .substring("Exception :".length)
+                                  .trim()
+                              : _.loadingState.value,
+                          maxLines: 10,
                         ),
+                        SizedBox(height: 10.h),
+                        CustomButton(
+                            primary: Colors.green, // background
+                            onPrimary: Colors.white, // foreground
+                            child: const CustomAutoSizeText(
+                              "Retry Again",
+                            ),
+                            onPressed: () {
+                              _.getPrayerTimes();
+                            }),
                       ],
                     )
                   : CustomAutoSizeText(_.loadingState.value),

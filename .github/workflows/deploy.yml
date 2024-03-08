@@ -93,5 +93,5 @@ jobs:
           serviceAccountJson: ${{ env.SERVICE_ACCOUNT_PATH }}
           packageName: ${{env.PACKAGE_NAME}}
           releaseFiles: ${{ env.AAB_PATH }}
-          changesNotSentForReview: true
+          # changesNotSentForReview: true
           # track: internal

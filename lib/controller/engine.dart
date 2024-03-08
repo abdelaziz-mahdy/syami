@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:syami/constants/string_constants.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
 

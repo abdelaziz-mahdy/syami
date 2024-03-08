@@ -71,7 +71,9 @@ jobs:
       - name: Build aab
         run: |
           flutter build appbundle --release
-
+      - name: Build apk
+        run: |
+          flutter build apk --release
       # Upload generated aab to project artifacts
       - name: Upload generated aab to the artifacts
         uses: actions/upload-artifact@master

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -22,7 +21,7 @@ class MyApp extends StatelessWidget {
     Get.put(SearchEngine(), permanent: true);
 
     return ScreenUtilInit(
-      designSize: const Size(360, 690),
+      designSize: const Size(411.42857142857144, 683.4285714285714),
       child: GetMaterialApp(
         title: "Syami",
         theme: ThemeData.dark(),
@@ -115,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CustomAutoSizeText(
+                        CustomText(
                           _.loadingState.value
                                   .toLowerCase()
                                   .startsWith("exception:")
@@ -129,7 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         CustomButton(
                             primary: Colors.green, // background
                             onPrimary: Colors.white, // foreground
-                            child: const CustomAutoSizeText(
+                            child: const CustomText(
                               "Retry Again",
                             ),
                             onPressed: () {
@@ -137,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             }),
                       ],
                     )
-                  : CustomAutoSizeText(_.loadingState.value),
+                  : CustomText(_.loadingState.value),
             ),
           );
         }
@@ -167,12 +166,13 @@ class _MyHomePageState extends State<MyHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          CustomAutoSizeText(
+                          CustomText(
                             "Country: ${_.country.value}",
                             bold: true,
                           ),
+                          SizedBox(width: 10.w),
                           //Spacer(),
-                          CustomAutoSizeText(
+                          CustomText(
                             "City: ${_.city.value}",
                             bold: true,
                           ),
@@ -237,14 +237,14 @@ class _MyHomePageState extends State<MyHomePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                const CustomAutoSizeText(
+                                const CustomText(
                                   "Dates are not the same",
                                   color: Colors.red,
                                 ),
                                 const Spacer(),
-                                CustomAutoSizeText(
+                                CustomText(
                                     "Mecca date :${dateFormatter.format(_.meccaPrayer[index].date)}"),
-                                CustomAutoSizeText(
+                                CustomText(
                                     "${_.city} date :${dateFormatter.format(_.userPrayer[index].date)}")
                               ],
                             ),
@@ -280,29 +280,26 @@ class _MyHomePageState extends State<MyHomePage> {
                               children: [
                                 Row(
                                   children: [
-                                    CustomAutoSizeText(
+                                    CustomText(
                                       _.meccaPrayer[index].weekDay,
                                       bold: true,
                                       //defaultFont: 18,
-                                      maxFont: 18,
                                     ),
                                     const Spacer(),
-                                    CustomAutoSizeText(
+                                    CustomText(
                                       dateFormatter.format(
                                         _.meccaPrayer[index].date,
                                       ),
                                       bold: true,
                                       //defaultFont: 18,
-                                      maxFont: 18,
                                     ),
                                   ],
                                 ),
                                 const Divider(),
                                 const Padding(
                                   padding: EdgeInsets.only(bottom: 7.0),
-                                  child: CustomAutoSizeText(
+                                  child: CustomText(
                                     "Mecca Times",
-                                    maxFont: 18,
                                   ),
                                 ),
                                 Padding(
@@ -316,23 +313,23 @@ class _MyHomePageState extends State<MyHomePage> {
                                         TableRow(
                                             children: [
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             "Fajr",
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Dhuhr',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Asr',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Maghrib',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Isha',
                                           )),
                                         ]
@@ -345,31 +342,31 @@ class _MyHomePageState extends State<MyHomePage> {
                                         TableRow(
                                             children: [
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.meccaPrayer[index].fajr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.meccaPrayer[index].dhuhr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.meccaPrayer[index].asr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.meccaPrayer[index].maghrib),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.meccaPrayer[index].isha),
                                             ),
@@ -385,9 +382,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 7.0),
-                                  child: CustomAutoSizeText(
+                                  child: CustomText(
                                     "${_.city.value} Prayer Times",
-                                    maxFont: 18,
                                   ),
                                 ),
                                 Padding(
@@ -401,23 +397,23 @@ class _MyHomePageState extends State<MyHomePage> {
                                         TableRow(
                                             children: [
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             "Fajr",
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Dhuhr',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Asr',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Maghrib',
                                           )),
                                           const Center(
-                                              child: CustomAutoSizeText(
+                                              child: CustomText(
                                             'Isha',
                                           )),
                                         ]
@@ -430,31 +426,31 @@ class _MyHomePageState extends State<MyHomePage> {
                                         TableRow(
                                             children: [
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.userPrayer[index].fajr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.userPrayer[index].dhuhr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.userPrayer[index].asr),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.userPrayer[index].maghrib),
                                             ),
                                           ),
                                           Center(
-                                            child: CustomAutoSizeText(
+                                            child: CustomText(
                                               formatter.format(
                                                   _.userPrayer[index].isha),
                                             ),
@@ -473,13 +469,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                   child: Row(
                                     children: [
                                       const Expanded(
-                                        child: CustomAutoSizeText(
+                                        child: CustomText(
                                           "Mecca Fasting Duration ",
                                           center: false,
                                         ),
                                       ),
                                       Expanded(
-                                          child: CustomAutoSizeText(
+                                          child: CustomText(
                                         _printDuration(fastingMecca),
                                         color: Colors.blue,
                                       ))
@@ -491,13 +487,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                   child: Row(
                                     children: [
                                       Expanded(
-                                        child: CustomAutoSizeText(
+                                        child: CustomText(
                                           "${_.city.value} Fasting Duration ",
                                           center: false,
                                         ),
                                       ),
                                       Expanded(
-                                          child: CustomAutoSizeText(
+                                          child: CustomText(
                                         _printDuration(fastingUser),
                                         color: Colors.blue,
                                       ))
@@ -510,14 +506,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                     children: [
                                       Expanded(
                                         flex: 3,
-                                        child: CustomAutoSizeText(
+                                        child: CustomText(
                                           "${_.city.value} iftar based on mecca duration ",
                                           center: false,
                                           maxLines: 3,
                                         ),
                                       ),
                                       Expanded(
-                                          child: CustomAutoSizeText(
+                                          child: CustomText(
                                         formatter.format(iftarUser),
                                         maxLines: 3,
                                         color: Colors.blue,

@@ -46,7 +46,6 @@ class SearchEngine extends GetxController {
 
   @override
   Future<void> onReady() async {
-    await initScreenUtil();
 
     //setCatcherLogsPath();
 
@@ -127,6 +126,7 @@ class SearchEngine extends GetxController {
       (month, year) = getNextMonthAndYearFromPrayers(userPrayer);
       // Fetch user location if needed
       if (userPosition == null || getNewLocation) {
+        print("FETCHING NEW LOCATION");
         await getUserLocation(getNewLocation: getNewLocation);
       }
 
@@ -152,7 +152,9 @@ class SearchEngine extends GetxController {
       if (userPrayer.length < 5) {
         await getPrayerTimes();
       }
+      print("DONE LOADING PRAYER TIMES");
     } catch (e) {
+      print(e);
       loadingState.value = e.toString();
     }
   }
@@ -215,10 +217,4 @@ class SearchEngine extends GetxController {
     listRefresher.loadComplete();
   }
 
-  Future<void> initScreenUtil() async {
-    ScreenUtil.init(Get.context!,
-        designSize: const Size(411.42857142857144, 683.4285714285714),
-        minTextAdapt: true);
-    update();
-  }
 }

@@ -20,48 +20,6 @@ class StringConstants {
   static Color videoPlayerButtonsColor = Colors.black45;
 }
 
-class CustomAutoSizeText extends StatelessWidget {
-  final String text;
-  final bool bold;
-  final bool center;
-  final double? maxFont;
-  final double? minFont;
-  final int maxLines;
-  final Color color;
-  final double? defaultFont;
-
-  const CustomAutoSizeText(
-    this.text, {
-    super.key,
-    this.bold = false,
-    this.center = true,
-    this.maxFont,
-    this.minFont,
-    this.maxLines = 1,
-    this.color = Colors.white,
-    this.defaultFont,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AutoSizeText(
-      text,
-      maxLines: maxLines,
-      maxFontSize: maxFont ?? double.parse((16.sp).toStringAsFixed(0)),
-      minFontSize: minFont ?? double.parse((12.sp).toStringAsFixed(0)),
-      softWrap: true,
-      textAlign: center ? TextAlign.center : TextAlign.left,
-      style: TextStyle(
-        color: color,
-        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        fontSize: defaultFont ?? double.parse((17.sp).toStringAsFixed(0)),
-      ),
-      overflow: TextOverflow.ellipsis,
-      stepGranularity: 0.1,
-    );
-  }
-}
-
 class CustomText extends StatelessWidget {
   final String text;
   final bool bold;
@@ -74,10 +32,10 @@ class CustomText extends StatelessWidget {
     this.text, {
     super.key,
     this.bold = false,
-    this.center = false,
+    this.center = true,
     this.color = Colors.white,
     this.defaultFont,
-    this.maxLines = 1,
+    this.maxLines = 2,
   });
 
   @override
@@ -89,7 +47,7 @@ class CustomText extends StatelessWidget {
       style: TextStyle(
         color: color,
         fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        fontSize: defaultFont ?? 18.sp,
+        fontSize: defaultFont ?? 15.sp,
       ),
       overflow: TextOverflow.ellipsis,
       maxLines: maxLines,

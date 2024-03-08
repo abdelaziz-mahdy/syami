@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
@@ -46,7 +44,6 @@ class SearchEngine extends GetxController {
 
   @override
   Future<void> onReady() async {
-
     //setCatcherLogsPath();
 
     dioInter = dio.Dio();
@@ -216,5 +213,4 @@ class SearchEngine extends GetxController {
     await getPrayerTimes();
     listRefresher.loadComplete();
   }
-
 }

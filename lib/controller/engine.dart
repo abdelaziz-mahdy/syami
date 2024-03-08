@@ -13,7 +13,7 @@ import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
 
 class SearchEngine extends GetxController {
-  String serverUrlApi = "http://api.aladhan.com/v1/";
+  String serverUrlApi = "https://api.aladhan.com/v1/";
 
   Rx<String> loadingState = Rx<String>("");
   RxBool appLoaded = false.obs;

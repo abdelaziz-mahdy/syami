@@ -7,6 +7,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/locator.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class SearchEngine extends GetxController {
   String serverUrlApi = "https://api.aladhan.com/v1/";
@@ -70,7 +71,7 @@ class SearchEngine extends GetxController {
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
     List<dynamic>? jsonResponse = [];
     String urlDone =
-        "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year";
+        "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year&iso8601=true";
     print(urlDone);
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
@@ -158,17 +159,19 @@ class SearchEngine extends GetxController {
 
   void processPrayerTimes(
       List<dynamic> prayerTimes, List<DayPrayer> prayersList) {
+    tz.Location timeZone = tz.getLocation(prayerTimes[0]["meta"]["timezone"]);
+
     for (var times in prayerTimes) {
       DayPrayer dayPrayer = DayPrayer(
-        times["date"]["gregorian"]["date"],
-        times["date"]["gregorian"]["format"],
-        times["date"]["gregorian"]["weekday"]["en"],
-        times["timings"]["Fajr"],
-        times["timings"]["Dhuhr"],
-        times["timings"]["Asr"],
-        times["timings"]["Maghrib"],
-        times["timings"]["Isha"],
-      );
+          times["date"]["gregorian"]["date"],
+          times["date"]["gregorian"]["format"],
+          times["date"]["gregorian"]["weekday"]["en"],
+          times["timings"]["Fajr"],
+          times["timings"]["Dhuhr"],
+          times["timings"]["Asr"],
+          times["timings"]["Maghrib"],
+          times["timings"]["Isha"],
+          timeZone);
 
       // Add prayer times for current and future dates
       if (dayPrayer.date.month == DateTime.now().month) {

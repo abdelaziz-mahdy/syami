@@ -73,7 +73,9 @@ class SearchEngine extends GetxController {
     List<dynamic>? jsonResponse = [];
     String urlDone =
         "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year&iso8601=true";
-    print(urlDone);
+    if (kDebugMode) {
+      print(urlDone);
+    }
     dio.Response response = await loadLink(urlDone);
     //print(response.data);
     if (response.statusCode == 200) {
@@ -127,7 +129,9 @@ class SearchEngine extends GetxController {
       (month, year) = getNextMonthAndYearFromPrayers(userPrayer);
       // Fetch user location if needed
       if (userPosition == null || getNewLocation) {
-        print("FETCHING NEW LOCATION");
+        if (kDebugMode) {
+          print("FETCHING NEW LOCATION");
+        }
         await getUserLocation(getNewLocation: getNewLocation);
       }
 
@@ -146,16 +150,22 @@ class SearchEngine extends GetxController {
       if (meccaPrayer.isNotEmpty &&
           userPrayer.isNotEmpty &&
           meccaPrayer[0].date != userPrayer[0].date) {
-        print("DATES ARE NOT ALIGNED");
+        if (kDebugMode) {
+          print("DATES ARE NOT ALIGNED");
+        }
       }
 
       // Check if further pagination is needed
       if (userPrayer.length < 5) {
         await getPrayerTimes();
       }
-      print("DONE LOADING PRAYER TIMES");
+      if (kDebugMode) {
+        print("DONE LOADING PRAYER TIMES");
+      }
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
       loadingState.value = e.toString();
     }
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
@@ -108,7 +109,9 @@ class SearchEngine extends GetxController {
     loadingState.value = "Getting your location";
     userPosition = await determinePosition(getNew: getNewLocation);
     Map<String, String> location = await getCityFromPosition(userPosition!);
-    print(location);
+    if (kDebugMode) {
+      print(location);
+    }
     city.value = location["city"] ?? "Unknown";
     country.value = location["country"] ?? "Unknown";
   }

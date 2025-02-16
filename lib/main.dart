@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/string_constants.dart';
-import 'package:syami/controller/engine.dart';
+
+import 'package:syami/controller/_engine.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 //late Catcher catcher;
@@ -53,14 +54,14 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => engineMyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class engineMyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
+    // by the engineincrementCounter method above.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
@@ -73,8 +74,8 @@ class _MyHomePageState extends State<MyHomePage> {
           widget.title,
         ),
       ),
-      body: GetX<SearchEngine>(builder: (_) {
-        if (!_.appLoaded.value) {
+      body: GetX<SearchEngine>(builder: (engine) {
+        if (!engine.appLoaded.value) {
           return Container(
             padding: const EdgeInsets.all(7),
             margin: const EdgeInsets.all(7),
@@ -89,12 +90,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 borderRadius:
                     BorderRadius.circular(StringConstants.cornersSettings)),
             child: CustomText(
-              _.loadingState.value,
+              engine.loadingState.value,
               defaultFont: 18,
             ),
           );
         }
-        if (_.userPrayer.isEmpty) {
+        if (engine.userPrayer.isEmpty) {
           return Center(
             child: Container(
               padding: const EdgeInsets.all(7),
@@ -110,20 +111,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                   borderRadius:
                       BorderRadius.circular(StringConstants.cornersSettings)),
-              child: _.loadingState.value == StringConstants.loadingLinkError ||
-                      _.loadingState.value.toLowerCase().contains("exception")
+              child: engine.loadingState.value ==
+                          StringConstants.loadingLinkError ||
+                      engine.loadingState.value
+                          .toLowerCase()
+                          .contains("exception")
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CustomText(
-                          _.loadingState.value
+                          engine.loadingState.value
                                   .toLowerCase()
                                   .startsWith("exception:")
-                              ? _.loadingState.value
+                              ? engine.loadingState.value
                                   .substring("Exception :".length)
                                   .trim()
-                              : _.loadingState.value,
+                              : engine.loadingState.value,
                           maxLines: 10,
                         ),
                         SizedBox(height: 10.h),
@@ -134,19 +138,19 @@ class _MyHomePageState extends State<MyHomePage> {
                               "Retry Again",
                             ),
                             onPressed: () {
-                              _.getPrayerTimes();
+                              engine.getPrayerTimes();
                             }),
                       ],
                     )
-                  : CustomText(_.loadingState.value),
+                  : CustomText(engine.loadingState.value),
             ),
           );
         }
         return Column(
           children: [
-            GetX<SearchEngine>(builder: (_) {
-              //_.userPrayer;
-              //print(_.userPrayer.length);
+            GetX<SearchEngine>(builder: (engine) {
+              //engine.userPrayer;
+              //print(engine.userPrayer.length);
 
               return Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -169,18 +173,18 @@ class _MyHomePageState extends State<MyHomePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           CustomText(
-                            "Country: ${_.country.value}",
+                            "Country: ${engine.country.value}",
                             bold: true,
                           ),
                           SizedBox(width: 10.w),
                           //Spacer(),
                           CustomText(
-                            "City: ${_.city.value}",
+                            "City: ${engine.city.value}",
                             bold: true,
                           ),
                           IconButton(
                               onPressed: () {
-                                _.getPrayerTimes(getNewLocation: true);
+                                engine.getPrayerTimes(getNewLocation: true);
                               },
                               icon: const Icon(
                                 Icons.refresh,
@@ -189,9 +193,9 @@ class _MyHomePageState extends State<MyHomePage> {
               );
             }),
             Expanded(
-              child: GetBuilder<SearchEngine>(builder: (_) {
-                //_.userPrayer;
-                //print(_.userPrayer.length);
+              child: GetBuilder<SearchEngine>(builder: (engine) {
+                //engine.userPrayer;
+                //print(engine.userPrayer.length);
 
                 bool hourFormattedAs24 =
                     MediaQuery.of(context).alwaysUse24HourFormat;
@@ -201,26 +205,28 @@ class _MyHomePageState extends State<MyHomePage> {
                 return SmartRefresher(
                   enablePullDown: false,
                   enablePullUp: true,
-                  controller: _.listRefresher,
+                  controller: engine.listRefresher,
                   footer: const ClassicFooter(
                     loadingIcon: CircularProgressIndicator(
                       strokeWidth: 2.0,
                     ),
                   ),
                   onLoading: () {
-                    _.loadMoreMonth();
+                    engine.loadMoreMonth();
                   },
                   child: ListView.separated(
                       scrollDirection: Axis.vertical,
-                      itemCount: _.userPrayer.length,
+                      itemCount: engine.userPrayer.length,
                       separatorBuilder: (context, index) {
                         return const Divider(
                           height: 5,
                         );
                       },
                       itemBuilder: (BuildContext context, int index) {
-                        if (dateFormatter.format(_.meccaPrayer[index].date) !=
-                            dateFormatter.format(_.userPrayer[index].date)) {
+                        if (dateFormatter
+                                .format(engine.meccaPrayer[index].date) !=
+                            dateFormatter
+                                .format(engine.userPrayer[index].date)) {
                           return Container(
                             padding: const EdgeInsets.all(7),
                             margin: const EdgeInsets.only(left: 7, right: 7),
@@ -245,20 +251,21 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                                 const Spacer(),
                                 CustomText(
-                                    "Mecca date :${dateFormatter.format(_.meccaPrayer[index].date)}"),
+                                    "Mecca date :${dateFormatter.format(engine.meccaPrayer[index].date)}"),
                                 CustomText(
-                                    "${_.city} date :${dateFormatter.format(_.userPrayer[index].date)}")
+                                    "${engine.city} date :${dateFormatter.format(engine.userPrayer[index].date)}")
                               ],
                             ),
                           );
                         }
-                        Duration fastingMecca = _.meccaPrayer[index].maghrib
-                            .difference(_.meccaPrayer[index].fajr);
-                        Duration fastingUser = _.userPrayer[index].maghrib
-                            .difference(_.userPrayer[index].fajr);
+                        Duration fastingMecca = engine
+                            .meccaPrayer[index].maghrib
+                            .difference(engine.meccaPrayer[index].fajr);
+                        Duration fastingUser = engine.userPrayer[index].maghrib
+                            .difference(engine.userPrayer[index].fajr);
 
                         DateTime iftarUser =
-                            _.userPrayer[index].fajr.add(fastingMecca);
+                            engine.userPrayer[index].fajr.add(fastingMecca);
 
                         return Padding(
                           padding: const EdgeInsets.all(5.0),
@@ -283,14 +290,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                 Row(
                                   children: [
                                     CustomText(
-                                      _.meccaPrayer[index].weekDay,
+                                      engine.meccaPrayer[index].weekDay,
                                       bold: true,
                                       //defaultFont: 18,
                                     ),
                                     const Spacer(),
                                     CustomText(
                                       dateFormatter.format(
-                                        _.meccaPrayer[index].date,
+                                        engine.meccaPrayer[index].date,
                                       ),
                                       bold: true,
                                       //defaultFont: 18,
@@ -345,32 +352,32 @@ class _MyHomePageState extends State<MyHomePage> {
                                             children: [
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.meccaPrayer[index].fajr),
+                                              formatter.format(engine
+                                                  .meccaPrayer[index].fajr),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.meccaPrayer[index].dhuhr),
+                                              formatter.format(engine
+                                                  .meccaPrayer[index].dhuhr),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.meccaPrayer[index].asr),
+                                              formatter.format(engine
+                                                  .meccaPrayer[index].asr),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.meccaPrayer[index].maghrib),
+                                              formatter.format(engine
+                                                  .meccaPrayer[index].maghrib),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.meccaPrayer[index].isha),
+                                              formatter.format(engine
+                                                  .meccaPrayer[index].isha),
                                             ),
                                           ),
                                         ]
@@ -385,7 +392,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 7.0),
                                   child: CustomText(
-                                    "${_.city.value} Prayer Times",
+                                    "${engine.city.value} Prayer Times",
                                   ),
                                 ),
                                 Padding(
@@ -429,32 +436,32 @@ class _MyHomePageState extends State<MyHomePage> {
                                             children: [
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.userPrayer[index].fajr),
+                                              formatter.format(engine
+                                                  .userPrayer[index].fajr),
+                                            ),
+                                          ),
+                                          Center(
+                                            child: CustomText(
+                                              formatter.format(engine
+                                                  .userPrayer[index].dhuhr),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
                                               formatter.format(
-                                                  _.userPrayer[index].dhuhr),
+                                                  engine.userPrayer[index].asr),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.userPrayer[index].asr),
+                                              formatter.format(engine
+                                                  .userPrayer[index].maghrib),
                                             ),
                                           ),
                                           Center(
                                             child: CustomText(
-                                              formatter.format(
-                                                  _.userPrayer[index].maghrib),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(
-                                                  _.userPrayer[index].isha),
+                                              formatter.format(engine
+                                                  .userPrayer[index].isha),
                                             ),
                                           ),
                                         ]
@@ -478,7 +485,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ),
                                       Expanded(
                                           child: CustomText(
-                                        _printDuration(fastingMecca),
+                                        engineprintDuration(fastingMecca),
                                         color: Colors.blue,
                                       ))
                                     ],
@@ -490,13 +497,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                     children: [
                                       Expanded(
                                         child: CustomText(
-                                          "${_.city.value} Fasting Duration ",
+                                          "${engine.city.value} Fasting Duration ",
                                           center: false,
                                         ),
                                       ),
                                       Expanded(
                                           child: CustomText(
-                                        _printDuration(fastingUser),
+                                        engineprintDuration(fastingUser),
                                         color: Colors.blue,
                                       ))
                                     ],
@@ -509,7 +516,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       Expanded(
                                         flex: 3,
                                         child: CustomText(
-                                          "${_.city.value} iftar based on mecca duration ",
+                                          "${engine.city.value} iftar based on mecca duration ",
                                           center: false,
                                           maxLines: 3,
                                         ),
@@ -537,7 +544,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  String _printDuration(Duration duration) {
+  String engineprintDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     return "${twoDigits(duration.inHours)} Hours and $twoDigitMinutes Minutes";

@@ -66,6 +66,7 @@ android {
             signingConfig signingConfigs.release
         }
     }
+    namespace 'com.zcreations.syami'
 }
 
 flutter {

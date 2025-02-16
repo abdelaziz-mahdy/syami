@@ -5,11 +5,12 @@ on:
   # Run this workflow when any new code is pushed into the main branch
   push:
     branches: [master]
+
 concurrency:
   group: auto-deploy
   cancel-in-progress: true
 
-  
+
 jobs:
   store_deploy_android:
     # Only run this job if the branch name starts with 'release/'

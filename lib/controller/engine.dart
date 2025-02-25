@@ -70,9 +70,8 @@ class SearchEngine extends GetxController {
   }
 
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
-    List<dynamic>? jsonResponse = [];
     String urlDone =
-        "${serverUrlApi}calendar?latitude=${pos.latitude}&longitude=${pos.longitude}&month=$month&year=$year&iso8601=true";
+        "${serverUrlApi}calendar/$year/$month?latitude=${pos.latitude}&longitude=${pos.longitude}&iso8601=true";
     if (kDebugMode) {
       print(urlDone);
     }
@@ -80,8 +79,7 @@ class SearchEngine extends GetxController {
     //print(response.data);
     if (response.statusCode == 200) {
       //print(response.data);
-      jsonResponse = response.data["data"];
-      return jsonResponse;
+      return response.data["data"];
       //print(jsonResponse);
     }
   }

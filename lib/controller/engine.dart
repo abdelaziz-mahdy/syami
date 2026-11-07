@@ -9,6 +9,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/load_errors.dart';
 import 'package:syami/controller/locator.dart';
+import 'package:syami/controller/today.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class SearchEngine extends GetxController {
@@ -130,6 +131,7 @@ class SearchEngine extends GetxController {
       if (kDebugMode) {
         print("DONE LOADING PRAYER TIMES");
       }
+      if (ramadan.value == null) unawaited(loadRamadan());
     } catch (e) {
       if (kDebugMode) {
         print(e);
@@ -193,6 +195,60 @@ class SearchEngine extends GetxController {
     } while (user.length < 5 && ++months < 3);
   }
 
+  /// Expected dates of the current or next Ramadan, once loaded.
+  final ramadan = Rx<RamadanDates?>(null);
+
+  /// Plain-words reason the Ramadan dates couldn't be loaded, or "".
+  final ramadanError = "".obs;
+  final Map<int, RamadanDates> _ramadanByHijriYear = {};
+
+  /// Works out which Ramadan to show from today's Hijri date (in the loaded
+  /// days) and loads its expected Gregorian dates.
+  Future<void> loadRamadan({DateTime? now}) async {
+    final clock = now ?? DateTime.now();
+    final hijri = (dayFor(userPrayer, clock) ??
+            (userPrayer.isEmpty ? null : userPrayer.first))
+        ?.hijri;
+    if (hijri == null) return;
+    ramadanError.value = "";
+    try {
+      final year = ramadanYearFor(hijri);
+      var dates = await ramadanDates(year);
+      // The calculated end can fall a day before the loaded Hijri date
+      // says; then the next Ramadan is the one to count down to.
+      if (ramadanStatus(clock, dates) is RamadanOver) {
+        dates = await ramadanDates(year + 1);
+      }
+      ramadan.value = dates;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      ramadanError.value = describeLoadError(e);
+    }
+  }
+
+  /// 1 Ramadan to its last day of Hijri [year], asked once per year.
+  Future<RamadanDates> ramadanDates(int year) async {
+    final cached = _ramadanByHijriYear[year];
+    if (cached != null) return cached;
+    final start = await hijriToGregorian(1, 9, year);
+    final shawwal = await hijriToGregorian(1, 10, year);
+    final dates = RamadanDates(
+        year, start, DateTime(shawwal.year, shawwal.month, shawwal.day - 1));
+    return _ramadanByHijriYear[year] = dates;
+  }
+
+  /// The Gregorian date of a Hijri date, from aladhan.com's hToG endpoint.
+  Future<DateTime> hijriToGregorian(int day, int month, int year) async {
+    String two(int n) => n.toString().padLeft(2, "0");
+    final response =
+        await loadLink("${serverUrlApi}hToG/${two(day)}-${two(month)}-$year");
+    final parts = "${response.data["data"]["gregorian"]["date"]}".split("-");
+    return DateTime(
+        int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+  }
+
   /// Adds the days in [prayerTimes] (one aladhan.com calendar month) to
   /// [prayersList], skipping days before today.
   void processPrayerTimes(
@@ -212,7 +268,8 @@ class SearchEngine extends GetxController {
           times["timings"]["Asr"],
           times["timings"]["Maghrib"],
           times["timings"]["Isha"],
-          timeZone);
+          timeZone,
+          hijri: HijriDate.fromApi(times["date"]["hijri"]));
 
       // Compare whole dates: checking only the month and day dropped the
       // first days of this month a year later (e.g. 1-6 November 2027 when

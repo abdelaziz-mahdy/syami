@@ -69,11 +69,22 @@ String? mostCommonName(Iterable<String?> names) {
   return best;
 }
 
-Future<Map<String, String>> getCityFromPosition(Position pos) async {
-  List<Placemark> placemarks = await Geocoding().placemarkFromCoordinates(
+/// Reverse-geocodes [pos] to `{"city": ..., "country": ...}`.
+///
+/// The platform geocoder has no timeout of its own: on a flaky connection
+/// it never answered and the app sat on "Getting your location" for good.
+/// After [timeout] this throws a TimeoutException, which the screen shows
+/// as a connection problem with a Try again button.
+Future<Map<String, String>> getCityFromPosition(
+  Position pos, {
+  Duration timeout = const Duration(seconds: 20),
+  Future<List<Placemark>> Function(double latitude, double longitude)? lookup,
+}) async {
+  final placemarks = await (lookup ??
+      (lat, lon) => Geocoding().placemarkFromCoordinates(lat, lon))(
     pos.latitude,
     pos.longitude,
-  );
+  ).timeout(timeout);
   // The geocoder can return an empty locality for every result (central
   // Newcastle upon Tyne does). Counting those empty names made the city
   // blank, so fall back to the wider area instead.

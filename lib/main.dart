@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,6 +13,15 @@ import 'package:syami/controller/time_zones.dart';
 void main() {
   loadTimeZones();
   WidgetsFlutterBinding.ensureInitialized();
+  // Draw behind the status and navigation bars on every Android version.
+  // Android 15+ already forces this for apps targeting API 35+, so older
+  // versions now match it instead of showing an opaque black navigation bar
+  // (Play: "Edge-to-edge may not display for all users").
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+  ));
 
   runApp(const MyApp());
 }

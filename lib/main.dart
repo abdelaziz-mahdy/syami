@@ -113,64 +113,56 @@ class MyHomePageState extends State<MyHomePage> {
         return Column(
           children: [
             GetX<SearchEngine>(builder: (engine) {
-              return Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Container(
-                    padding: const EdgeInsets.all(7),
-                    margin: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                        boxShadow: const [
-                          BoxShadow(
-                            blurRadius: 3.0,
-                            spreadRadius: 0.0,
-                            offset: Offset(
-                                2.0, 2.0), // shadow direction: bottom right
-                          )
+              final text = Theme.of(context).textTheme;
+              final colors = Theme.of(context).colorScheme;
+              // Same flat surface as the day cards: the place is the title,
+              // the country under it, Update location on the right.
+              return Card(
+                elevation: 0,
+                color: colors.surfaceContainer,
+                margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
+                  child: Row(children: [
+                    Icon(Icons.place_outlined, color: colors.onSurfaceVariant),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(engine.city.value,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600)),
+                          Text(engine.country.value,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.bodyMedium
+                                  ?.copyWith(color: colors.onSurfaceVariant)),
                         ],
-                        borderRadius: BorderRadius.circular(
-                            StringConstants.cornersSettings)),
-                    child: Row(children: [
-                      // Wrap puts City on its own line when both don't fit,
-                      // instead of overflowing and covering the refresh
-                      // button ("United Arab Emirates" + "Abu Dhabi").
-                      Expanded(
-                        child: Wrap(
-                          alignment: WrapAlignment.spaceEvenly,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 10.w,
-                          runSpacing: 4,
-                          children: [
-                            CustomText(
-                              "Country: ${engine.country.value}",
-                              bold: true,
-                            ),
-                            CustomText(
-                              "City: ${engine.city.value}",
-                              bold: true,
-                            ),
-                          ],
-                        ),
                       ),
-                      engine.updatingLocation.value
-                          ? const SizedBox.square(
-                              dimension: 48,
-                              child: Center(
-                                child: SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    semanticsLabel: "Updating location",
-                                  ),
+                    ),
+                    engine.updatingLocation.value
+                        ? const SizedBox.square(
+                            dimension: 48,
+                            child: Center(
+                              child: SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  semanticsLabel: "Updating location",
                                 ),
                               ),
-                            )
-                          : IconButton(
-                              tooltip: "Update location",
-                              onPressed: () => updateLocation(engine),
-                              icon: const Icon(
-                                Icons.refresh,
-                              ))
-                    ])),
+                            ),
+                          )
+                        : IconButton(
+                            tooltip: "Update location",
+                            onPressed: () => updateLocation(engine),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                  ]),
+                ),
               );
             }),
             Expanded(

@@ -162,8 +162,8 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Country: United Arab Emirates'), findsOneWidget);
-    expect(find.text('City: Abu Dhabi'), findsOneWidget);
+    expect(find.text('United Arab Emirates'), findsOneWidget);
+    expect(find.text('Abu Dhabi'), findsWidgets);
     expect(tester.getRect(find.byIcon(Icons.refresh)).right,
         lessThanOrEqualTo(1080 / 2.625));
   });
@@ -316,7 +316,10 @@ void main() {
           expect(find.text(name), findsOneWidget);
         }
         expect(find.text('Mecca'), findsOneWidget);
-        expect(find.text(city), findsOneWidget);
+        // The city heads its column (and titles the location header).
+        expect(
+            find.descendant(of: find.byType(Table), matching: find.text(city)),
+            findsOneWidget);
 
         for (final t in [
           '5:14 AM',

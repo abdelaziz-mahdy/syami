@@ -1,6 +1,3 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -37,9 +34,6 @@ class DayPrayer {
       String maghribTime,
       String ishaTime,
       tz.Location timeZone) {
-    if (kDebugMode) {
-      print(MediaQuery.of(Get.context!).alwaysUse24HourFormat);
-    }
     date = DateFormat(dateFormat.replaceAll("YYYY", "yyyy")).parse(dateString);
     fajr = tz.TZDateTime.parse(timeZone, fajrTime);
     dhuhr = tz.TZDateTime.parse(timeZone, dhuhrTime);

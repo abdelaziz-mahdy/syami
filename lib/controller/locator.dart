@@ -1,5 +1,6 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:syami/controller/load_errors.dart';
 
 /// Determine the current position of the device.
 ///
@@ -15,7 +16,7 @@ Future<Position> determinePosition({bool getNew = false}) async {
     // Location services are not enabled don't continue
     // accessing the position and request users of the
     // App to enable the location services.
-    throw Exception('Location services are disabled. Please enable it.');
+    throw Exception('Location is turned off. Turn it on, then tap Try again.');
   }
 
   permission = await Geolocator.checkPermission();
@@ -27,14 +28,14 @@ Future<Position> determinePosition({bool getNew = false}) async {
       // Android's shouldShowRequestPermissionRationale
       // returned true. According to Android guidelines
       // your App should show an explanatory UI now.
-      throw Exception('Location permissions are denied');
+      throw Exception(locationPermissionDenied);
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
     // Permissions are denied forever, handle appropriately.
-    throw Exception(
-        'Location permissions are permanently denied, we cannot request permissions.');
+    throw Exception("Location access is blocked for Syami. Allow it in your "
+        "phone's Settings, then tap Try again.");
   }
   Position? lastKnown = await Geolocator.getLastKnownPosition();
   if (lastKnown != null && !getNew) {

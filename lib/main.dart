@@ -120,13 +120,7 @@ class MyHomePageState extends State<MyHomePage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CustomText(
-                          engine.loadingState.value
-                                  .toLowerCase()
-                                  .startsWith("exception:")
-                              ? engine.loadingState.value
-                                  .substring("Exception :".length)
-                                  .trim()
-                              : engine.loadingState.value,
+                          engine.loadingState.value,
                           maxLines: 10,
                         ),
                         SizedBox(height: 10.h),
@@ -134,7 +128,7 @@ class MyHomePageState extends State<MyHomePage> {
                             primary: Colors.green, // background
                             onPrimary: Colors.white, // foreground
                             child: const CustomText(
-                              "Retry Again",
+                              "Try again",
                             ),
                             onPressed: () {
                               engine.getPrayerTimes();

@@ -38,7 +38,7 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('location service'), findsOneWidget);
-    await tester.tap(find.textContaining('Retry'));
+    await tester.tap(find.text('Try again'));
     expect(engine.loads, 1);
   });
 }

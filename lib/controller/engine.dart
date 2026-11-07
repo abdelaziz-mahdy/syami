@@ -7,6 +7,7 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/controller/classes.dart';
+import 'package:syami/controller/load_errors.dart';
 import 'package:syami/controller/locator.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -168,7 +169,7 @@ class SearchEngine extends GetxController {
       if (kDebugMode) {
         print(e);
       }
-      loadingState.value = e.toString();
+      loadingState.value = describeLoadError(e);
       loadFailed.value = true;
     }
   }

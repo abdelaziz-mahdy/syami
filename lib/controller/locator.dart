@@ -16,7 +16,8 @@ Future<Position> determinePosition({bool getNew = false}) async {
     // Location services are not enabled don't continue
     // accessing the position and request users of the
     // App to enable the location services.
-    throw Exception('Location is turned off. Turn it on, then tap Try again.');
+    throw Exception(
+        "Couldn't read your location. Check that location is on, then tap Try again.");
   }
 
   permission = await Geolocator.checkPermission();

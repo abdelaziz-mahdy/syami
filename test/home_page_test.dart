@@ -235,8 +235,8 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(SnackBar),
-        matching: find
-            .text('Location is turned off. Turn it on, then tap Try again.'),
+        matching: find.text(
+            "Couldn't read your location. Check that location is on, then tap Try again."),
       ),
       findsOneWidget,
     );

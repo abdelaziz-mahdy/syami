@@ -28,7 +28,7 @@ void main() {
     test('tells the user to turn location on', () {
       expect(
         describeLoadError(const LocationServiceDisabledException()),
-        'Location is turned off. Turn it on, then tap Try again.',
+        "Couldn't read your location. Check that location is on, then tap Try again.",
       );
     });
 

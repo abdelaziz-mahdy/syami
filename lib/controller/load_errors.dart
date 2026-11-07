@@ -13,7 +13,7 @@ String describeLoadError(Object error) {
   const offline = "Couldn't reach the prayer times service. "
       "Check your internet connection, then tap Try again.";
   if (error is LocationServiceDisabledException) {
-    return "Location is turned off. Turn it on, then tap Try again.";
+    return "Couldn't read your location. Check that location is on, then tap Try again.";
   }
   if (error is PermissionDeniedException) {
     return locationPermissionDenied;

@@ -2,9 +2,9 @@
 
 ## 1.0.19+21
 
-- Prayer times now load in Kuwait, Bahrain, Oman, Malaysia, Bosnia, Sweden and other places that showed a time zone error.
-- Your area's name shows when the city name isn't known.
-- Every error explains what to do and has a Try again button.
-- A spinner shows while your location and prayer times load.
-- Long country and city names fit on screen; times read 5:09 AM.
-- Dark launch screen and support for the latest Android versions.
+- New Today screen: today's prayers for Mecca and your city, a countdown to the next prayer, and your fasting times.
+- See how many days until Ramadan, or which day of Ramadan it is.
+- The full calendar is one tap away.
+- Prayer times now load in Kuwait, Oman, Malaysia, Bosnia, Sweden and more.
+- Clear errors with Try again; your days stay on screen if a location update fails.
+- New icon, dark launch screen, and support for the latest Android.

@@ -178,6 +178,7 @@ class MyHomePageState extends State<MyHomePage> {
                 String hourFormat = hourFormattedAs24 ? 'HH:mm' : 'h:mm a';
                 DateFormat formatter = DateFormat(hourFormat);
                 DateFormat dateFormatter = DateFormat("dd-MM-yyyy");
+                final colors = Theme.of(context).colorScheme;
                 return SmartRefresher(
                   enablePullDown: false,
                   enablePullUp: true,
@@ -221,9 +222,9 @@ class MyHomePageState extends State<MyHomePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                const CustomText(
+                                CustomText(
                                   "Dates are not the same",
-                                  color: Colors.red,
+                                  color: colors.error,
                                 ),
                                 // A Spacer here threw: list items have no height
                                 // limit for it to fill.
@@ -293,8 +294,8 @@ class MyHomePageState extends State<MyHomePage> {
                                   padding: const EdgeInsets.only(
                                       left: 5, right: 5, bottom: 25.0),
                                   child: Table(
-                                      border:
-                                          TableBorder.all(color: Colors.white),
+                                      border: TableBorder.all(
+                                          color: colors.outline),
                                       // Allows to add a border decoration around your table
                                       children: [
                                         TableRow(
@@ -377,8 +378,8 @@ class MyHomePageState extends State<MyHomePage> {
                                   padding: const EdgeInsets.only(
                                       left: 5, right: 5, bottom: 25.0),
                                   child: Table(
-                                      border:
-                                          TableBorder.all(color: Colors.white),
+                                      border: TableBorder.all(
+                                          color: colors.outline),
                                       // Allows to add a border decoration around your table
                                       children: [
                                         TableRow(
@@ -464,7 +465,7 @@ class MyHomePageState extends State<MyHomePage> {
                                       Expanded(
                                           child: CustomText(
                                         engineprintDuration(fastingMecca),
-                                        color: Colors.blue,
+                                        color: colors.primary,
                                       ))
                                     ],
                                   ),
@@ -482,7 +483,7 @@ class MyHomePageState extends State<MyHomePage> {
                                       Expanded(
                                           child: CustomText(
                                         engineprintDuration(fastingUser),
-                                        color: Colors.blue,
+                                        color: colors.primary,
                                       ))
                                     ],
                                   ),
@@ -503,7 +504,7 @@ class MyHomePageState extends State<MyHomePage> {
                                           child: CustomText(
                                         formatter.format(iftarUser),
                                         maxLines: 3,
-                                        color: Colors.blue,
+                                        color: colors.primary,
                                       ))
                                     ],
                                   ),

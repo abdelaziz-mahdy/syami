@@ -258,4 +258,16 @@ void main() {
     expect(find.text('Sarajevo Prayer Times'), findsWidgets);
     expect(find.byType(SnackBar), findsNothing);
   });
+
+  testWidgets('list colours come from the theme', (tester) async {
+    await pumpAbuDhabiList(tester);
+    final colors =
+        Theme.of(tester.element(find.text('Mecca Times').first)).colorScheme;
+
+    final duration =
+        tester.widget<Text>(find.text('12 Hours and 28 Minutes').first);
+    expect(duration.style!.color, colors.primary);
+    final table = tester.widget<Table>(find.byType(Table).first);
+    expect(table.border!.top.color, colors.outline);
+  });
 }

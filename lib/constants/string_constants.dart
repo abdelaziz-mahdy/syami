@@ -9,7 +9,7 @@ class CustomText extends StatelessWidget {
   final String text;
   final bool bold;
   final bool center;
-  final Color color;
+  final Color? color;
   final double? defaultFont;
   final int maxLines;
 
@@ -18,7 +18,7 @@ class CustomText extends StatelessWidget {
     super.key,
     this.bold = false,
     this.center = true,
-    this.color = Colors.white,
+    this.color,
     this.defaultFont,
     this.maxLines = 2,
   });

@@ -5,7 +5,7 @@
 
 
    <application
-        android:label="syami"
+        android:label="Syami"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

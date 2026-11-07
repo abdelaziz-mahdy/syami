@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:syami/controller/engine.dart';
+import 'package:syami/controller/classes.dart';
+import 'package:syami/controller/time_zones.dart';
 import 'package:syami/main.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 /// An engine that never touches the network or GPS; tests set its state.
 class FakeEngine extends SearchEngine {
@@ -27,7 +30,20 @@ Future<FakeEngine> pumpHome(WidgetTester tester) async {
   return engine;
 }
 
+DayPrayer abuDhabiDay() => DayPrayer(
+      '07-11-2026',
+      'DD-MM-YYYY',
+      'Saturday',
+      '2026-11-07T05:14:00+04:00',
+      '2026-11-07T12:09:00+04:00',
+      '2026-11-07T15:17:00+04:00',
+      '2026-11-07T17:42:00+04:00',
+      '2026-11-07T18:58:00+04:00',
+      tz.getLocation('Asia/Dubai'),
+    );
+
 void main() {
+  setUpAll(loadTimeZones);
   tearDown(Get.reset);
 
   testWidgets('a failed load always offers Retry', (tester) async {
@@ -51,5 +67,27 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Getting your location'), findsOneWidget);
     expect(find.text('Try again'), findsNothing);
+  });
+
+  testWidgets('a long country and city fit a phone-width header',
+      (tester) async {
+    // Pixel 9 size; the header used to overflow here and cover the button.
+    tester.view.physicalSize = const Size(1080, 2424);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
+
+    final engine = await pumpHome(tester);
+    engine.country.value = 'United Arab Emirates';
+    engine.city.value = 'Abu Dhabi';
+    engine.userPrayer.add(abuDhabiDay());
+    engine.meccaPrayer.add(abuDhabiDay());
+    engine.update();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Country: United Arab Emirates'), findsOneWidget);
+    expect(find.text('City: Abu Dhabi'), findsOneWidget);
+    expect(tester.getRect(find.byIcon(Icons.refresh)).right,
+        lessThanOrEqualTo(1080 / 2.625));
   });
 }

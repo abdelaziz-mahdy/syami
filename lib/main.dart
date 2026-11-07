@@ -144,28 +144,36 @@ class MyHomePageState extends State<MyHomePage> {
                         ],
                         borderRadius: BorderRadius.circular(
                             StringConstants.cornersSettings)),
-                    child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          CustomText(
-                            "Country: ${engine.country.value}",
-                            bold: true,
-                          ),
-                          SizedBox(width: 10.w),
-                          //Spacer(),
-                          CustomText(
-                            "City: ${engine.city.value}",
-                            bold: true,
-                          ),
-                          IconButton(
-                              onPressed: () {
-                                engine.getPrayerTimes(getNewLocation: true);
-                              },
-                              icon: const Icon(
-                                Icons.refresh,
-                              ))
-                        ])),
+                    child: Row(children: [
+                      // Wrap puts City on its own line when both don't fit,
+                      // instead of overflowing and covering the refresh
+                      // button ("United Arab Emirates" + "Abu Dhabi").
+                      Expanded(
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceEvenly,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 10.w,
+                          runSpacing: 4,
+                          children: [
+                            CustomText(
+                              "Country: ${engine.country.value}",
+                              bold: true,
+                            ),
+                            CustomText(
+                              "City: ${engine.city.value}",
+                              bold: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            engine.getPrayerTimes(getNewLocation: true);
+                          },
+                          icon: const Icon(
+                            Icons.refresh,
+                          ))
+                    ])),
               );
             }),
             Expanded(

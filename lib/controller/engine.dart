@@ -23,7 +23,6 @@ class SearchEngine extends GetxController {
   RxString country = "".obs;
   RefreshController listRefresher = RefreshController(initialRefresh: false);
 
-  dio.CancelToken token = dio.CancelToken();
   late dio.Dio dioInter;
 
   RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
@@ -41,17 +40,9 @@ class SearchEngine extends GetxController {
       timestamp: DateTime.now(),
       accuracy: 0);
   Position? userPosition;
-  @override
-  void dispose() {
-    //  flutterWebviewPlugin.dispose();
-    // _onStateChanged.cancel();
-    super.dispose();
-  }
 
   @override
   Future<void> onReady() async {
-    //setCatcherLogsPath();
-
     dioInter = dio.Dio();
     dioInter.options.connectTimeout = const Duration(seconds: 5);
     dioInter.interceptors.add(RetryInterceptor(
@@ -68,9 +59,6 @@ class SearchEngine extends GetxController {
     ));
     appLoaded.value = true;
     await getPrayerTimes();
-
-    //update();
-    //afterLoading();
   }
 
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
@@ -80,11 +68,8 @@ class SearchEngine extends GetxController {
       print(urlDone);
     }
     dio.Response response = await loadLink(urlDone);
-    //print(response.data);
     if (response.statusCode == 200) {
-      //print(response.data);
       return response.data["data"];
-      //print(jsonResponse);
     }
   }
 
@@ -93,13 +78,6 @@ class SearchEngine extends GetxController {
     Map<String, String>? param,
     Map<String, String>? headers,
   }) async {
-    /*
-    dio.BaseOptions(
-
-        headers: headers,
-        connectTimeout: 5000,
-        followRedirects: true,
-        receiveDataWhenStatusError: true,*/
     return await dioInter.get(url!,
         queryParameters: param,
         options: dio.Options(

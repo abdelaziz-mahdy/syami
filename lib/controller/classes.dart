@@ -1,21 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-class UpdateVersion {
-  final String? version, description;
-
-  UpdateVersion({
-    required this.version,
-    required this.description,
-  });
-}
-
-enum LoadingStatus {
-  loading,
-  error,
-  loaded,
-}
-
 class DayPrayer {
   late DateTime date;
   late String weekDay;

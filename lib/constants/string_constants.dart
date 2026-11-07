@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:syami/controller/classes.dart';
 
 class StringConstants {
-  static String appName = 'Anime Here';
-  static String errorsEmail = "zcreations00@gmail.com";
-  static String loadingLink1 = "Reading the site";
-  static String loadingLink2 = "converting the response";
-  static String loadingLinkError = "Connection Failed";
-
-  static double paddingSettings = 5;
   static double cornersSettings = 5;
-  static double cornersSettings2 = 10;
-  static double iconSize = 20;
-  static Color iconColorSettings = Colors.blueAccent;
-  static Color dialogColor = Colors.grey.shade800;
-  static Color messagesColor = Colors.grey.shade900;
-  static Color videoPlayerButtonsColor = Colors.black45;
 }
 
 class CustomText extends StatelessWidget {
@@ -87,34 +73,5 @@ class CustomButton extends StatelessWidget {
       onPressed: onPressed,
       child: child,
     );
-  }
-}
-
-class LoadingStateWidget extends StatelessWidget {
-  final LoadingStatus state;
-  final Widget child;
-
-  const LoadingStateWidget({
-    super.key,
-    required this.state,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    switch (state) {
-      case LoadingStatus.loading:
-        return SizedBox(
-            width: 50.w,
-            height: 50.h,
-            child: const Center(child: CircularProgressIndicator()));
-      case LoadingStatus.error:
-        return SizedBox(
-            width: 50.w,
-            height: 50.h,
-            child: const Center(child: Icon(Icons.error, color: Colors.red)));
-      default:
-        return child;
-    }
   }
 }

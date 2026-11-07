@@ -102,4 +102,16 @@ void main() {
 
     expect(find.byTooltip('Update location'), findsOneWidget);
   });
+
+  testWidgets('the iftar row names Mecca properly', (tester) async {
+    final engine = await pumpHome(tester);
+    engine.city.value = 'Mountain View';
+    engine.userPrayer.add(abuDhabiDay());
+    engine.meccaPrayer.add(abuDhabiDay());
+    engine.update();
+    await tester.pump();
+
+    expect(find.text("Mountain View Iftar by Mecca's Fasting Duration"),
+        findsOneWidget);
+  });
 }

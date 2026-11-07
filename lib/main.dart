@@ -501,7 +501,7 @@ class MyHomePageState extends State<MyHomePage> {
                                       Expanded(
                                         flex: 3,
                                         child: CustomText(
-                                          "${engine.city.value} iftar based on mecca duration ",
+                                          "${engine.city.value} Iftar by Mecca's Fasting Duration",
                                           center: false,
                                           maxLines: 3,
                                         ),

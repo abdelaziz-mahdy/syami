@@ -6,11 +6,11 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/string_constants.dart';
 
 import 'package:syami/controller/engine.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:syami/controller/time_zones.dart';
 
 //late Catcher catcher;
 void main() {
-  tz.initializeTimeZones();
+  loadTimeZones();
   WidgetsFlutterBinding.ensureInitialized();
 
   runApp(const MyApp());

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/engine.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:syami/controller/time_zones.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// A day as the aladhan.com calendar API returns it (iso8601=true).
@@ -22,7 +22,27 @@ DayPrayer losAngelesDay(String date) {
 }
 
 void main() {
-  setUpAll(tz_data.initializeTimeZones);
+  setUpAll(loadTimeZones);
+
+  test('every zone the API names for these cities is known', () {
+    // All of these were missing from the smaller database the app used,
+    // so the app showed 'Location with the name ... doesn't exist'.
+    for (final zone in [
+      'Asia/Kuwait',
+      'Asia/Bahrain',
+      'Asia/Muscat',
+      'Asia/Aden',
+      'Asia/Kuala_Lumpur',
+      'Asia/Brunei',
+      'Europe/Sarajevo',
+      'Europe/Stockholm',
+      'Europe/Amsterdam',
+      'Africa/Dakar',
+      'Africa/Mogadishu',
+    ]) {
+      expect(() => tz.getLocation(zone), returnsNormally, reason: zone);
+    }
+  });
 
   group('DayPrayer', () {
     test('parses the API date and keeps times in the local time zone', () {

@@ -48,49 +48,40 @@ Future<Position> determinePosition({bool getNew = false}) async {
   }
 }
 
+/// The name that appears most often in [names], ignoring empty ones, or
+/// null when there is none. Ties go to the name seen first.
+String? mostCommonName(Iterable<String?> names) {
+  final counts = <String, int>{};
+  for (final raw in names) {
+    final name = raw?.trim() ?? "";
+    if (name.isEmpty) continue;
+    counts[name] = (counts[name] ?? 0) + 1;
+  }
+  String? best;
+  var bestCount = 0;
+  counts.forEach((name, count) {
+    if (count > bestCount) {
+      best = name;
+      bestCount = count;
+    }
+  });
+  return best;
+}
+
 Future<Map<String, String>> getCityFromPosition(Position pos) async {
-  Map<String, int> countCity = {};
-  Map<String, int> countCountry = {};
-  Map<String, String> returned = {};
   List<Placemark> placemarks = await placemarkFromCoordinates(
     pos.latitude,
     pos.longitude,
   );
-
-  for (int i = 0; i < placemarks.length; i++) {
-    if (countCity.containsKey(placemarks[i].locality)) {
-      countCity[placemarks[i].locality!] =
-          (countCity[placemarks[i].locality]! + 1);
-    } else {
-      countCity[placemarks[i].locality!] = 1;
-    }
-    if (countCountry.containsKey(placemarks[i].country)) {
-      countCountry[placemarks[i].country!] =
-          (countCountry[placemarks[i].country]! + 1);
-    } else {
-      countCountry[placemarks[i].country!] = 1;
-    }
-  }
-
-  int thevalue = -1;
-  String thekey = "";
-
-  countCity.forEach((k, v) {
-    if (v > thevalue) {
-      thevalue = v;
-      thekey = k;
-    }
-  });
-  returned["city"] = thekey;
-
-  thevalue = -1;
-  thekey = "";
-  countCountry.forEach((k, v) {
-    if (v > thevalue) {
-      thevalue = v;
-      thekey = k;
-    }
-  });
-  returned["country"] = thekey;
-  return returned;
+  // The geocoder can return an empty locality for every result (central
+  // Newcastle upon Tyne does). Counting those empty names made the city
+  // blank, so fall back to the wider area instead.
+  final city = mostCommonName(placemarks.map((p) => p.locality)) ??
+      mostCommonName(placemarks.map((p) => p.subAdministrativeArea)) ??
+      mostCommonName(placemarks.map((p) => p.administrativeArea));
+  final country = mostCommonName(placemarks.map((p) => p.country));
+  return {
+    if (city != null) "city": city,
+    if (country != null) "country": country,
+  };
 }

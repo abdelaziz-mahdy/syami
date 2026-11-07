@@ -174,9 +174,14 @@ class SearchEngine extends GetxController {
     }
   }
 
+  /// Adds the days in [prayerTimes] (one aladhan.com calendar month) to
+  /// [prayersList], skipping days before today.
   void processPrayerTimes(
-      List<dynamic> prayerTimes, List<DayPrayer> prayersList) {
+      List<dynamic> prayerTimes, List<DayPrayer> prayersList,
+      {DateTime? now}) {
     tz.Location timeZone = tz.getLocation(prayerTimes[0]["meta"]["timezone"]);
+    final today = now ?? DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
 
     for (var times in prayerTimes) {
       DayPrayer dayPrayer = DayPrayer(
@@ -190,12 +195,10 @@ class SearchEngine extends GetxController {
           times["timings"]["Isha"],
           timeZone);
 
-      // Add prayer times for current and future dates
-      if (dayPrayer.date.month == DateTime.now().month) {
-        if (dayPrayer.date.day >= DateTime.now().day) {
-          prayersList.add(dayPrayer);
-        }
-      } else {
+      // Compare whole dates: checking only the month and day dropped the
+      // first days of this month a year later (e.g. 1-6 November 2027 when
+      // today is 7 November 2026).
+      if (!dayPrayer.date.isBefore(startOfToday)) {
         prayersList.add(dayPrayer);
       }
     }

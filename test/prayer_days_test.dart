@@ -76,4 +76,47 @@ void main() {
       );
     });
   });
+
+  group('processPrayerTimes', () {
+    Map<String, dynamic> apiDay(String date) {
+      final p = date.split('-');
+      final iso = '${p[2]}-${p[1]}-${p[0]}';
+      return {
+        'date': {
+          'gregorian': {
+            'date': date,
+            'format': 'DD-MM-YYYY',
+            'weekday': {'en': 'Saturday'},
+          },
+        },
+        'timings': {
+          for (final name in ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
+            name: '${iso}T12:00:00+04:00',
+        },
+        'meta': {'timezone': 'Asia/Dubai'},
+      };
+    }
+
+    final today = DateTime(2026, 11, 7, 15, 30);
+
+    test('skips days before today', () {
+      final days = <DayPrayer>[];
+      SearchEngine().processPrayerTimes(
+        [apiDay('06-11-2026'), apiDay('07-11-2026'), apiDay('08-11-2026')],
+        days,
+        now: today,
+      );
+      expect(days.map((d) => d.date.day), [7, 8]);
+    });
+
+    test('keeps every day of the same month next year', () {
+      final days = <DayPrayer>[];
+      SearchEngine().processPrayerTimes(
+        [apiDay('01-11-2027'), apiDay('06-11-2027'), apiDay('07-11-2027')],
+        days,
+        now: today,
+      );
+      expect(days.map((d) => d.date.day), [1, 6, 7]);
+    });
+  });
 }

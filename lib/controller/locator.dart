@@ -70,7 +70,7 @@ String? mostCommonName(Iterable<String?> names) {
 }
 
 Future<Map<String, String>> getCityFromPosition(Position pos) async {
-  List<Placemark> placemarks = await placemarkFromCoordinates(
+  List<Placemark> placemarks = await Geocoding().placemarkFromCoordinates(
     pos.latitude,
     pos.longitude,
   );

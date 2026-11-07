@@ -168,7 +168,7 @@ class MyHomePageState extends State<MyHomePage> {
               child: GetBuilder<SearchEngine>(builder: (engine) {
                 bool hourFormattedAs24 =
                     MediaQuery.of(context).alwaysUse24HourFormat;
-                String hourFormat = hourFormattedAs24 ? 'HH:mm' : 'hh:mm a';
+                String hourFormat = hourFormattedAs24 ? 'HH:mm' : 'h:mm a';
                 DateFormat formatter = DateFormat(hourFormat);
                 DateFormat dateFormatter = DateFormat("dd-MM-yyyy");
                 return SmartRefresher(

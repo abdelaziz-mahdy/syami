@@ -128,4 +128,15 @@ void main() {
     expect(find.text('Dates are not the same'), findsOneWidget);
     expect(find.text('Abu Dhabi date: 07-11-2026'), findsOneWidget);
   });
+
+  testWidgets('12-hour times have no leading zero', (tester) async {
+    final engine = await pumpHome(tester);
+    engine.userPrayer.add(abuDhabiDay());
+    engine.meccaPrayer.add(abuDhabiDay());
+    engine.update();
+    await tester.pump();
+
+    expect(find.text('5:14 AM'), findsWidgets);
+    expect(find.text('05:14 AM'), findsNothing);
+  });
 }

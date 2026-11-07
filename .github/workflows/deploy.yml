@@ -5,6 +5,14 @@ on:
   # Run this workflow when any new code is pushed into the main branch
   push:
     branches: [master]
+    # Pushes that can't change the app would re-upload the same version
+    # code, which Play rejects.
+    paths-ignore:
+      - '**/*.md'
+      - '*.md'
+      - 'test/**'
+      - 'tool/**'
+      - '.github/**'
 
 concurrency:
   group: auto-deploy

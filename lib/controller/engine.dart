@@ -87,59 +87,46 @@ class SearchEngine extends GetxController {
         ));
   }
 
-  Future<void> getUserLocation({bool getNewLocation = false}) async {
+  Future<void> getUserLocation() async {
+    final (position, place) = await locate();
+    userPosition = position;
+    city.value = place.city;
+    country.value = place.country;
+  }
+
+  /// Reads the device position and names its city and country, without
+  /// changing what the screen shows.
+  Future<(Position, ({String city, String country}))> locate(
+      {bool fresh = false}) async {
     loadingState.value = "Getting your location";
-    userPosition = await determinePosition(getNew: getNewLocation);
-    Map<String, String> location = await getCityFromPosition(userPosition!);
+    final position = await determinePosition(getNew: fresh);
+    final location = await getCityFromPosition(position);
     if (kDebugMode) {
       print(location);
     }
-    city.value = location["city"] ?? "Unknown";
-    country.value = location["country"] ?? "Unknown";
+    return (
+      position,
+      (
+        city: location["city"] ?? "Unknown",
+        country: location["country"] ?? "Unknown",
+      )
+    );
   }
 
-  Future<void> getPrayerTimes({bool getNewLocation = false}) async {
+  /// True while [updateLocation] runs; the list stays on screen meanwhile.
+  RxBool updatingLocation = false.obs;
+
+  /// Loads the next month (the current one on first load), and keeps going
+  /// until at least five days are listed.
+  Future<void> getPrayerTimes() async {
     loadFailed.value = false;
     try {
-      // Clear data if fetching for a new location
-      if (getNewLocation) {
-        userPrayer.clear();
-        meccaPrayer.clear();
-      }
-      int month, year;
-      (month, year) = getNextMonthAndYearFromPrayers(userPrayer);
       // Fetch user location if needed
-      if (userPosition == null || getNewLocation) {
-        if (kDebugMode) {
-          print("FETCHING NEW LOCATION");
-        }
-        await getUserLocation(getNewLocation: getNewLocation);
+      if (userPosition == null) {
+        await getUserLocation();
       }
-
-      loadingState.value =
-          "Getting prayer times for ${city.value == "Unknown" || city.value.isEmpty ? country.value : city.value}";
-
-      // Fetch prayer times
-      var userPrayerTimes = await getApiForPosition(userPosition!, month, year);
-      var meccaPrayerTimes =
-          await getApiForPosition(meccaPosition, month, year);
-
-      processPrayerTimes(userPrayerTimes, userPrayer);
-      processPrayerTimes(meccaPrayerTimes, meccaPrayer);
-
-      // Check for date alignment
-      if (meccaPrayer.isNotEmpty &&
-          userPrayer.isNotEmpty &&
-          meccaPrayer[0].date != userPrayer[0].date) {
-        if (kDebugMode) {
-          print("DATES ARE NOT ALIGNED");
-        }
-      }
-
-      // Check if further pagination is needed
-      if (userPrayer.length < 5) {
-        await getPrayerTimes();
-      }
+      loadingState.value = "Getting prayer times for ${placeName()}";
+      await loadMonths(userPosition!, userPrayer, meccaPrayer);
       if (kDebugMode) {
         print("DONE LOADING PRAYER TIMES");
       }
@@ -150,6 +137,60 @@ class SearchEngine extends GetxController {
       loadingState.value = describeLoadError(e);
       loadFailed.value = true;
     }
+  }
+
+  /// Re-reads the device location and reloads from today for it.
+  ///
+  /// The current list stays on screen until the new one is ready. If
+  /// anything fails, the old list, place and position are kept and the
+  /// error is returned as a message for the user (null on success). It used
+  /// to clear the list first, so a failure left only an error screen.
+  Future<String?> updateLocation() async {
+    if (updatingLocation.value) return null;
+    updatingLocation.value = true;
+    try {
+      final (position, place) = await locate(fresh: true);
+      final user = <DayPrayer>[];
+      final mecca = <DayPrayer>[];
+      await loadMonths(position, user, mecca);
+      // Swap everything in one go, so the header, labels and days always
+      // belong to the same place.
+      userPosition = position;
+      city.value = place.city;
+      country.value = place.country;
+      userPrayer.assignAll(user);
+      meccaPrayer.assignAll(mecca);
+      update();
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return describeLoadError(e);
+    } finally {
+      updatingLocation.value = false;
+    }
+  }
+
+  String placeName() => city.value == "Unknown" || city.value.isEmpty
+      ? country.value
+      : city.value;
+
+  /// Appends the month after the last day in [user] (or the current month)
+  /// for [position] and Mecca, repeating until [user] has five days.
+  Future<void> loadMonths(
+      Position position, List<DayPrayer> user, List<DayPrayer> mecca) async {
+    // At most three months: the current month always has today in it, so
+    // this only guards against an API answer with no usable days.
+    var months = 0;
+    do {
+      final (month, year) = getNextMonthAndYearFromPrayers(user);
+      final userPrayerTimes = await getApiForPosition(position, month, year);
+      final meccaPrayerTimes =
+          await getApiForPosition(meccaPosition, month, year);
+      processPrayerTimes(userPrayerTimes, user);
+      processPrayerTimes(meccaPrayerTimes, mecca);
+    } while (user.length < 5 && ++months < 3);
   }
 
   /// Adds the days in [prayerTimes] (one aladhan.com calendar month) to
@@ -211,7 +252,9 @@ class SearchEngine extends GetxController {
   }
 
   Future<void> loadMoreMonth() async {
-    await getPrayerTimes();
+    // While Update location runs, the list is about to be replaced; adding a
+    // month for the old place would mix two places in one list.
+    if (!updatingLocation.value) await getPrayerTimes();
     listRefresher.loadComplete();
   }
 }

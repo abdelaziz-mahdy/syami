@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/classes.dart';
@@ -17,9 +18,73 @@ class FakeEngine extends SearchEngine {
   }
 
   @override
-  Future<void> getPrayerTimes({bool getNewLocation = false}) async {
+  Future<void> getPrayerTimes() async {
     loads++;
   }
+
+  /// What the next location read throws, or else returns.
+  Object? locateError;
+  (Position, ({String city, String country}))? located;
+
+  @override
+  Future<(Position, ({String city, String country}))> locate(
+      {bool fresh = false}) async {
+    if (locateError != null) throw locateError!;
+    return located!;
+  }
+
+  /// One week of days from today, as the calendar API returns them.
+  @override
+  Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
+    final today = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return [
+      for (var i = 0; i < 7; i++)
+        () {
+          final d = DateTime(today.year, today.month, today.day + i);
+          final iso = '${d.year}-${two(d.month)}-${two(d.day)}';
+          return {
+            'date': {
+              'gregorian': {
+                'date': '${two(d.day)}-${two(d.month)}-${d.year}',
+                'format': 'DD-MM-YYYY',
+                'weekday': {'en': 'Day$i'},
+              },
+            },
+            'timings': {
+              for (final n in ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
+                n: '${iso}T12:00:00+01:00',
+            },
+            'meta': {'timezone': 'Europe/Sarajevo'},
+          };
+        }(),
+    ];
+  }
+}
+
+Position at(double lat, double lon) => Position(
+      latitude: lat,
+      longitude: lon,
+      timestamp: DateTime(2026),
+      accuracy: 0,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+
+Future<FakeEngine> pumpAbuDhabiList(WidgetTester tester) async {
+  final engine = await pumpHome(tester);
+  engine.userPosition = at(24.45, 54.38);
+  engine.country.value = 'United Arab Emirates';
+  engine.city.value = 'Abu Dhabi';
+  engine.userPrayer.add(abuDhabiDay());
+  engine.meccaPrayer.add(abuDhabiDay());
+  engine.update();
+  await tester.pump();
+  return engine;
 }
 
 Future<FakeEngine> pumpHome(WidgetTester tester) async {
@@ -138,5 +203,51 @@ void main() {
 
     expect(find.text('5:14 AM'), findsWidgets);
     expect(find.text('05:14 AM'), findsNothing);
+  });
+
+  testWidgets('a failed Update location keeps the list and offers Try again',
+      (tester) async {
+    final engine = await pumpAbuDhabiList(tester);
+    engine.locateError = const LocationServiceDisabledException();
+
+    await tester.tap(find.byTooltip('Update location'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 750));
+
+    // The list, place and position are untouched.
+    expect(find.text('Abu Dhabi Prayer Times'), findsOneWidget);
+    expect(engine.userPrayer, hasLength(1));
+    expect(engine.city.value, 'Abu Dhabi');
+    expect(engine.userPosition!.latitude, 24.45);
+    // The reason and a way to retry, in a SnackBar.
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find
+            .text('Location is turned off. Turn it on, then tap Try again.'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(SnackBarAction, 'Try again'), findsOneWidget);
+    expect(engine.loadFailed.value, isFalse);
+  });
+
+  testWidgets('a successful Update location swaps in the new place',
+      (tester) async {
+    final engine = await pumpAbuDhabiList(tester);
+    engine.located = (
+      at(43.86, 18.41),
+      (city: 'Sarajevo', country: 'Bosnia and Herzegovina'),
+    );
+
+    await tester.tap(find.byTooltip('Update location'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(engine.city.value, 'Sarajevo');
+    expect(engine.userPrayer, hasLength(7));
+    expect(engine.userPrayer.first.date.day, DateTime.now().day);
+    expect(find.text('Sarajevo Prayer Times'), findsWidgets);
+    expect(find.byType(SnackBar), findsNothing);
   });
 }

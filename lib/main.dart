@@ -153,14 +153,25 @@ class MyHomePageState extends State<MyHomePage> {
                           ],
                         ),
                       ),
-                      IconButton(
-                          tooltip: "Update location",
-                          onPressed: () {
-                            engine.getPrayerTimes(getNewLocation: true);
-                          },
-                          icon: const Icon(
-                            Icons.refresh,
-                          ))
+                      engine.updatingLocation.value
+                          ? const SizedBox.square(
+                              dimension: 48,
+                              child: Center(
+                                child: SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    semanticsLabel: "Updating location",
+                                  ),
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              tooltip: "Update location",
+                              onPressed: () => updateLocation(engine),
+                              icon: const Icon(
+                                Icons.refresh,
+                              ))
                     ])),
               );
             }),
@@ -513,6 +524,23 @@ class MyHomePageState extends State<MyHomePage> {
         );
       }),
     );
+  }
+
+  /// Keeps the current list on screen while the location is re-read; a
+  /// failure shows a SnackBar with the reason and a Try again action.
+  Future<void> updateLocation(SearchEngine engine) async {
+    final error = await engine.updateLocation();
+    if (error == null || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(error),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: "Try again",
+          onPressed: () => updateLocation(engine),
+        ),
+      ));
   }
 
   String engineprintDuration(Duration duration) {

@@ -56,11 +56,15 @@ class MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(
-            tooltip: "Full calendar",
-            onPressed: () => openFullCalendar(context),
-            icon: const Icon(Icons.calendar_month_outlined),
-          ),
+          // Only once there are days to show: during loading or a failed
+          // first load it would open an empty calendar.
+          Obx(() => Get.find<SearchEngine>().userPrayer.isEmpty
+              ? const SizedBox.shrink()
+              : IconButton(
+                  tooltip: "Full calendar",
+                  onPressed: () => openFullCalendar(context),
+                  icon: const Icon(Icons.calendar_month_outlined),
+                )),
         ],
       ),
       body: GetX<SearchEngine>(builder: (engine) {

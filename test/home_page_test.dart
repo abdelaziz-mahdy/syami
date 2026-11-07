@@ -175,6 +175,8 @@ void main() {
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Getting your location'), findsOneWidget);
+    // Nothing to open yet.
+    expect(find.byTooltip('Full calendar'), findsNothing);
     expect(find.text('Try again'), findsNothing);
   });
 

@@ -47,9 +47,9 @@ class SearchEngine extends GetxController {
     dioInter.options.connectTimeout = const Duration(seconds: 5);
     dioInter.interceptors.add(RetryInterceptor(
       dio: dioInter,
-      logPrint: print,
+      // Retry logs are for debugging only, not for release logcat.
+      logPrint: kDebugMode ? print : null,
       retries: 3,
-      // retry count (optional)
       retryDelays: const [
         // set delays between retries (optional)
         Duration(seconds: 1), // wait 1 sec before first retry

@@ -11,6 +11,9 @@ import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/classes.dart';
 import 'package:syami/controller/time_zones.dart';
 import 'package:syami/main.dart';
+import 'package:syami/controller/today.dart';
+import 'package:syami/day_card.dart';
+import 'package:syami/today_view.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// An engine that never touches the network or GPS; tests set its state.
@@ -126,9 +129,23 @@ DayPrayer abuDhabiDay([String day = '07']) => DayPrayer(
       tz.getLocation('Asia/Dubai'),
     );
 
+/// Opens the full calendar from the app bar and lets the route settle (the
+/// Ramadan card's progress bar keeps pumpAndSettle from returning).
+Future<void> openCalendar(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Full calendar'));
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 void main() {
   setUpAll(loadTimeZones);
-  tearDown(Get.reset);
+  // 10:00 in Abu Dhabi on the fixture day: Dhuhr (12:09) is next.
+  setUp(() => appClock = () => DateTime.utc(2026, 11, 7, 6));
+  tearDown(() {
+    appClock = DateTime.now;
+    Get.reset();
+  });
 
   testWidgets('a failed load always offers Retry', (tester) async {
     final engine = await pumpHome(tester);
@@ -215,6 +232,7 @@ void main() {
     engine.meccaPrayer.add(abuDhabiDay('08'));
     engine.update();
     await tester.pump();
+    await openCalendar(tester);
 
     expect(tester.takeException(), isNull);
     expect(find.text('Dates are not the same'), findsOneWidget);
@@ -379,5 +397,69 @@ void main() {
     engine.failNextLoad = false;
     await engine.loadMoreMonth();
     expect(footer.reported, 'complete');
+  });
+
+  group('Today view', () {
+    // A tall phone, so the whole Today view is laid out.
+    setUp(() {
+      final view =
+          TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+      view.physicalSize = const Size(412 * 3, 2400 * 3);
+      view.devicePixelRatio = 3;
+    });
+    tearDown(() => TestWidgetsFlutterBinding
+        .instance.platformDispatcher.views.first
+        .reset());
+
+    testWidgets('shows today with the next prayer counting down',
+        (tester) async {
+      await pumpAbuDhabiList(tester);
+
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Saturday 7 November 2026'), findsOneWidget);
+      // 10:00 local (06:00 UTC) to Dhuhr at 12:09 (+04:00).
+      expect(find.text('Dhuhr in 2 h 9 min'), findsOneWidget);
+      expect(find.text('Iftar using Mecca\'s fasting time'), findsOneWidget);
+    });
+
+    testWidgets('Full calendar opens the day-by-day list', (tester) async {
+      final engine = await pumpAbuDhabiList(tester);
+      engine.userPrayer.add(abuDhabiDay('08'));
+      engine.meccaPrayer.add(abuDhabiDay('08'));
+      engine.update();
+      await tester.pump();
+
+      await tester.tap(find.text('Full calendar'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+
+      expect(find.widgetWithText(AppBar, 'Full calendar'), findsOneWidget);
+      expect(find.byType(DayCard), findsNWidgets(2));
+      expect(find.text('Today'), findsNothing);
+    });
+
+    testWidgets('Ramadan card counts down to the expected start',
+        (tester) async {
+      final engine = await pumpAbuDhabiList(tester);
+      engine.ramadan.value =
+          RamadanDates(1448, DateTime(2027, 2, 8), DateTime(2027, 3, 8));
+      await tester.pump();
+
+      expect(find.text('Ramadan starts in 93 days'), findsOneWidget);
+      expect(find.text('Expected on Monday 8 February 2027.'), findsOneWidget);
+      expect(find.textContaining('moon sighting'), findsOneWidget);
+    });
+
+    testWidgets('Ramadan card explains a failed load and offers Try again',
+        (tester) async {
+      final engine = await pumpAbuDhabiList(tester);
+      engine.ramadanError.value = "Couldn't reach the prayer times service. "
+          "Check your internet connection, then tap Try again.";
+      await tester.pump();
+
+      expect(find.textContaining("Couldn't reach"), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Try again'), findsOneWidget);
+    });
   });
 }

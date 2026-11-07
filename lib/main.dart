@@ -1,13 +1,10 @@
-import 'dart:math' show min;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/time_zones.dart';
-import 'package:syami/day_card.dart';
+import 'package:syami/today_view.dart';
 
 void main() {
   loadTimeZones();
@@ -57,9 +54,14 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.title,
-        ),
+        title: Text(widget.title),
+        actions: [
+          IconButton(
+            tooltip: "Full calendar",
+            onPressed: () => openFullCalendar(context),
+            icon: const Icon(Icons.calendar_month_outlined),
+          ),
+        ],
       ),
       body: GetX<SearchEngine>(builder: (engine) {
         if (!engine.appLoaded.value) {
@@ -77,126 +79,9 @@ class MyHomePageState extends State<MyHomePage> {
             onRetry: engine.getPrayerTimes,
           );
         }
-        return Column(
-          children: [
-            GetX<SearchEngine>(builder: (engine) {
-              final text = Theme.of(context).textTheme;
-              final colors = Theme.of(context).colorScheme;
-              // Same flat surface as the day cards: the place is the title,
-              // the country under it, Update location on the right.
-              return Card(
-                elevation: 0,
-                color: colors.surfaceContainer,
-                margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
-                  child: Row(children: [
-                    Icon(Icons.place_outlined, color: colors.onSurfaceVariant),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(engine.city.value,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: text.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600)),
-                          Text(engine.country.value,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: text.bodyMedium
-                                  ?.copyWith(color: colors.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
-                    engine.updatingLocation.value
-                        ? const SizedBox.square(
-                            dimension: 48,
-                            child: Center(
-                              child: SizedBox.square(
-                                dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  semanticsLabel: "Updating location",
-                                ),
-                              ),
-                            ),
-                          )
-                        : IconButton(
-                            tooltip: "Update location",
-                            onPressed: () => updateLocation(engine),
-                            icon: const Icon(Icons.refresh),
-                          ),
-                  ]),
-                ),
-              );
-            }),
-            Expanded(
-              child: GetBuilder<SearchEngine>(builder: (engine) {
-                final days =
-                    min(engine.userPrayer.length, engine.meccaPrayer.length);
-                // The app draws behind the navigation bar (edge-to-edge), so
-                // keep the last card and the next-month footer above it.
-                return SafeArea(
-                    top: false,
-                    child: SmartRefresher(
-                      enablePullDown: false,
-                      enablePullUp: true,
-                      controller: engine.listRefresher,
-                      // The package's default footer copy ("Pull up load", "Load
-                      // Failed!") is replaced with plain sentences in theme text.
-                      footer: ClassicFooter(
-                        idleText: "Pull up for the next month",
-                        canLoadingText: "Release to load the next month",
-                        loadingText: "Loading the next month",
-                        failedText:
-                            "Couldn't load the next month. Pull up to try again.",
-                        textStyle: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant),
-                        loadingIcon: const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.0),
-                        ),
-                      ),
-                      onLoading: engine.loadMoreMonth,
-                      child: ListView.builder(
-                        itemCount: days,
-                        itemBuilder: (context, index) => DayCard(
-                          mecca: engine.meccaPrayer[index],
-                          local: engine.userPrayer[index],
-                          city: engine.placeName(),
-                        ),
-                      ),
-                    ));
-              }),
-            ),
-          ],
-        );
+        return const TodayView();
       }),
     );
-  }
-
-  /// Keeps the current list on screen while the location is re-read; a
-  /// failure shows a SnackBar with the reason and a Try again action.
-  Future<void> updateLocation(SearchEngine engine) async {
-    final error = await engine.updateLocation();
-    if (error == null || !mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(error),
-        duration: const Duration(seconds: 8),
-        action: SnackBarAction(
-          label: "Try again",
-          onPressed: () => updateLocation(engine),
-        ),
-      ));
   }
 }
 

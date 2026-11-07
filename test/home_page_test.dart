@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:get/get.dart';
 import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/classes.dart';
@@ -21,9 +22,12 @@ class FakeEngine extends SearchEngine {
     appLoaded.value = true;
   }
 
+  bool failNextLoad = false;
+
   @override
   Future<void> getPrayerTimes() async {
     loads++;
+    loadFailed.value = failNextLoad;
   }
 
   /// What the next location read throws, or else returns.
@@ -64,6 +68,17 @@ class FakeEngine extends SearchEngine {
         }(),
     ];
   }
+}
+
+/// Records how a load-more ended instead of animating a footer.
+class SpyRefreshController extends RefreshController {
+  String? reported;
+
+  @override
+  void loadFailed() => reported = 'failed';
+
+  @override
+  void loadComplete() => reported = 'complete';
 }
 
 Position at(double lat, double lon) => Position(
@@ -350,5 +365,19 @@ void main() {
         }
       });
     }
+  });
+
+  test('a failed next month shows the failed footer, not a silent stop',
+      () async {
+    final footer = SpyRefreshController();
+    final engine = FakeEngine()
+      ..listRefresher = footer
+      ..failNextLoad = true;
+    await engine.loadMoreMonth();
+    expect(footer.reported, 'failed');
+
+    engine.failNextLoad = false;
+    await engine.loadMoreMonth();
+    expect(footer.reported, 'complete');
   });
 }

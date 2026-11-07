@@ -255,6 +255,12 @@ class SearchEngine extends GetxController {
     // While Update location runs, the list is about to be replaced; adding a
     // month for the old place would mix two places in one list.
     if (!updatingLocation.value) await getPrayerTimes();
-    listRefresher.loadComplete();
+    // A failed month used to be reported as complete, so the footer showed
+    // nothing and the list just stopped growing.
+    if (loadFailed.value) {
+      listRefresher.loadFailed();
+    } else {
+      listRefresher.loadComplete();
+    }
   }
 }

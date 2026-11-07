@@ -140,8 +140,17 @@ class MyHomePageState extends State<MyHomePage> {
                   enablePullDown: false,
                   enablePullUp: true,
                   controller: engine.listRefresher,
-                  footer: const ClassicFooter(
-                    loadingIcon: SizedBox.square(
+                  // The package's default footer copy ("Pull up load", "Load
+                  // Failed!") is replaced with plain sentences in theme text.
+                  footer: ClassicFooter(
+                    idleText: "Pull up for the next month",
+                    canLoadingText: "Release to load the next month",
+                    loadingText: "Loading the next month",
+                    failedText:
+                        "Couldn't load the next month. Pull up to try again.",
+                    textStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    loadingIcon: const SizedBox.square(
                       dimension: 20,
                       child: CircularProgressIndicator(strokeWidth: 2.0),
                     ),

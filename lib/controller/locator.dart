@@ -1,5 +1,6 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:syami/controller/load_errors.dart';
 
 /// Determine the current position of the device.
 ///
@@ -15,7 +16,8 @@ Future<Position> determinePosition({bool getNew = false}) async {
     // Location services are not enabled don't continue
     // accessing the position and request users of the
     // App to enable the location services.
-    throw Exception('Location services are disabled. Please enable it.');
+    throw Exception(
+        "Couldn't read your location. Check that location is on, then tap Try again.");
   }
 
   permission = await Geolocator.checkPermission();
@@ -27,14 +29,14 @@ Future<Position> determinePosition({bool getNew = false}) async {
       // Android's shouldShowRequestPermissionRationale
       // returned true. According to Android guidelines
       // your App should show an explanatory UI now.
-      throw Exception('Location permissions are denied');
+      throw Exception(locationPermissionDenied);
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
     // Permissions are denied forever, handle appropriately.
-    throw Exception(
-        'Location permissions are permanently denied, we cannot request permissions.');
+    throw Exception("Location access is blocked for Syami. Allow it in your "
+        "phone's Settings, then tap Try again.");
   }
   Position? lastKnown = await Geolocator.getLastKnownPosition();
   if (lastKnown != null && !getNew) {
@@ -48,49 +50,51 @@ Future<Position> determinePosition({bool getNew = false}) async {
   }
 }
 
-Future<Map<String, String>> getCityFromPosition(Position pos) async {
-  Map<String, int> countCity = {};
-  Map<String, int> countCountry = {};
-  Map<String, String> returned = {};
-  List<Placemark> placemarks = await placemarkFromCoordinates(
+/// The name that appears most often in [names], ignoring empty ones, or
+/// null when there is none. Ties go to the name seen first.
+String? mostCommonName(Iterable<String?> names) {
+  final counts = <String, int>{};
+  for (final raw in names) {
+    final name = raw?.trim() ?? "";
+    if (name.isEmpty) continue;
+    counts[name] = (counts[name] ?? 0) + 1;
+  }
+  String? best;
+  var bestCount = 0;
+  counts.forEach((name, count) {
+    if (count > bestCount) {
+      best = name;
+      bestCount = count;
+    }
+  });
+  return best;
+}
+
+/// Reverse-geocodes [pos] to `{"city": ..., "country": ...}`.
+///
+/// The platform geocoder has no timeout of its own: on a flaky connection
+/// it never answered and the app sat on "Getting your location" for good.
+/// After [timeout] this throws a TimeoutException, which the screen shows
+/// as a connection problem with a Try again button.
+Future<Map<String, String>> getCityFromPosition(
+  Position pos, {
+  Duration timeout = const Duration(seconds: 20),
+  Future<List<Placemark>> Function(double latitude, double longitude)? lookup,
+}) async {
+  final placemarks = await (lookup ??
+      (lat, lon) => Geocoding().placemarkFromCoordinates(lat, lon))(
     pos.latitude,
     pos.longitude,
-  );
-
-  for (int i = 0; i < placemarks.length; i++) {
-    if (countCity.containsKey(placemarks[i].locality)) {
-      countCity[placemarks[i].locality!] =
-          (countCity[placemarks[i].locality]! + 1);
-    } else {
-      countCity[placemarks[i].locality!] = 1;
-    }
-    if (countCountry.containsKey(placemarks[i].country)) {
-      countCountry[placemarks[i].country!] =
-          (countCountry[placemarks[i].country]! + 1);
-    } else {
-      countCountry[placemarks[i].country!] = 1;
-    }
-  }
-
-  int thevalue = -1;
-  String thekey = "";
-
-  countCity.forEach((k, v) {
-    if (v > thevalue) {
-      thevalue = v;
-      thekey = k;
-    }
-  });
-  returned["city"] = thekey;
-
-  thevalue = -1;
-  thekey = "";
-  countCountry.forEach((k, v) {
-    if (v > thevalue) {
-      thevalue = v;
-      thekey = k;
-    }
-  });
-  returned["country"] = thekey;
-  return returned;
+  ).timeout(timeout);
+  // The geocoder can return an empty locality for every result (central
+  // Newcastle upon Tyne does). Counting those empty names made the city
+  // blank, so fall back to the wider area instead.
+  final city = mostCommonName(placemarks.map((p) => p.locality)) ??
+      mostCommonName(placemarks.map((p) => p.subAdministrativeArea)) ??
+      mostCommonName(placemarks.map((p) => p.administrativeArea));
+  final country = mostCommonName(placemarks.map((p) => p.country));
+  return {
+    if (city != null) "city": city,
+    if (country != null) "country": country,
+  };
 }

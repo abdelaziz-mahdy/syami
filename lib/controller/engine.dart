@@ -7,19 +7,23 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/controller/classes.dart';
+import 'package:syami/controller/load_errors.dart';
 import 'package:syami/controller/locator.dart';
+import 'package:syami/controller/today.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class SearchEngine extends GetxController {
   String serverUrlApi = "https://api.aladhan.com/v1/";
 
   Rx<String> loadingState = Rx<String>("");
+
+  /// True when the last load failed; [loadingState] then holds the message.
+  RxBool loadFailed = false.obs;
   RxBool appLoaded = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
   RefreshController listRefresher = RefreshController(initialRefresh: false);
 
-  dio.CancelToken token = dio.CancelToken();
   late dio.Dio dioInter;
 
   RxList<DayPrayer> userPrayer = RxList<DayPrayer>();
@@ -37,24 +41,16 @@ class SearchEngine extends GetxController {
       timestamp: DateTime.now(),
       accuracy: 0);
   Position? userPosition;
-  @override
-  void dispose() {
-    //  flutterWebviewPlugin.dispose();
-    // _onStateChanged.cancel();
-    super.dispose();
-  }
 
   @override
   Future<void> onReady() async {
-    //setCatcherLogsPath();
-
     dioInter = dio.Dio();
     dioInter.options.connectTimeout = const Duration(seconds: 5);
     dioInter.interceptors.add(RetryInterceptor(
       dio: dioInter,
-      logPrint: print,
+      // Retry logs are for debugging only, not for release logcat.
+      logPrint: kDebugMode ? print : null,
       retries: 3,
-      // retry count (optional)
       retryDelays: const [
         // set delays between retries (optional)
         Duration(seconds: 1), // wait 1 sec before first retry
@@ -64,9 +60,6 @@ class SearchEngine extends GetxController {
     ));
     appLoaded.value = true;
     await getPrayerTimes();
-
-    //update();
-    //afterLoading();
   }
 
   Future<dynamic> getApiForPosition(Position pos, int month, int year) async {
@@ -76,11 +69,8 @@ class SearchEngine extends GetxController {
       print(urlDone);
     }
     dio.Response response = await loadLink(urlDone);
-    //print(response.data);
     if (response.statusCode == 200) {
-      //print(response.data);
       return response.data["data"];
-      //print(jsonResponse);
     }
   }
 
@@ -89,13 +79,6 @@ class SearchEngine extends GetxController {
     Map<String, String>? param,
     Map<String, String>? headers,
   }) async {
-    /*
-    dio.BaseOptions(
-
-        headers: headers,
-        connectTimeout: 5000,
-        followRedirects: true,
-        receiveDataWhenStatusError: true,*/
     return await dioInter.get(url!,
         queryParameters: param,
         options: dio.Options(
@@ -105,72 +88,175 @@ class SearchEngine extends GetxController {
         ));
   }
 
-  Future<void> getUserLocation({bool getNewLocation = false}) async {
+  Future<void> getUserLocation() async {
+    final (position, place) = await locate();
+    userPosition = position;
+    city.value = place.city;
+    country.value = place.country;
+  }
+
+  /// Reads the device position and names its city and country, without
+  /// changing what the screen shows.
+  Future<(Position, ({String city, String country}))> locate(
+      {bool fresh = false}) async {
     loadingState.value = "Getting your location";
-    userPosition = await determinePosition(getNew: getNewLocation);
-    Map<String, String> location = await getCityFromPosition(userPosition!);
+    final position = await determinePosition(getNew: fresh);
+    final location = await getCityFromPosition(position);
     if (kDebugMode) {
       print(location);
     }
-    city.value = location["city"] ?? "Unknown";
-    country.value = location["country"] ?? "Unknown";
+    return (
+      position,
+      (
+        city: location["city"] ?? "Unknown",
+        country: location["country"] ?? "Unknown",
+      )
+    );
   }
 
-  Future<void> getPrayerTimes({bool getNewLocation = false}) async {
+  /// True while [updateLocation] runs; the list stays on screen meanwhile.
+  RxBool updatingLocation = false.obs;
+
+  /// Loads the next month (the current one on first load), and keeps going
+  /// until at least five days are listed.
+  Future<void> getPrayerTimes() async {
+    loadFailed.value = false;
     try {
-      // Clear data if fetching for a new location
-      if (getNewLocation) {
-        userPrayer.clear();
-        meccaPrayer.clear();
-      }
-      int month, year;
-      (month, year) = getNextMonthAndYearFromPrayers(userPrayer);
       // Fetch user location if needed
-      if (userPosition == null || getNewLocation) {
-        if (kDebugMode) {
-          print("FETCHING NEW LOCATION");
-        }
-        await getUserLocation(getNewLocation: getNewLocation);
+      if (userPosition == null) {
+        await getUserLocation();
       }
-
-      loadingState.value =
-          "Getting prayer times for ${city.value == "Unknown" || city.value.isEmpty ? country.value : city.value}";
-
-      // Fetch prayer times
-      var userPrayerTimes = await getApiForPosition(userPosition!, month, year);
-      var meccaPrayerTimes =
-          await getApiForPosition(meccaPosition, month, year);
-
-      processPrayerTimes(userPrayerTimes, userPrayer);
-      processPrayerTimes(meccaPrayerTimes, meccaPrayer);
-
-      // Check for date alignment
-      if (meccaPrayer.isNotEmpty &&
-          userPrayer.isNotEmpty &&
-          meccaPrayer[0].date != userPrayer[0].date) {
-        if (kDebugMode) {
-          print("DATES ARE NOT ALIGNED");
-        }
-      }
-
-      // Check if further pagination is needed
-      if (userPrayer.length < 5) {
-        await getPrayerTimes();
-      }
+      loadingState.value = "Getting prayer times for ${placeName()}";
+      await loadMonths(userPosition!, userPrayer, meccaPrayer);
       if (kDebugMode) {
         print("DONE LOADING PRAYER TIMES");
       }
+      if (ramadan.value == null) unawaited(loadRamadan());
     } catch (e) {
       if (kDebugMode) {
         print(e);
       }
-      loadingState.value = e.toString();
+      loadingState.value = describeLoadError(e);
+      loadFailed.value = true;
     }
   }
 
+  /// Re-reads the device location and reloads from today for it.
+  ///
+  /// The current list stays on screen until the new one is ready. If
+  /// anything fails, the old list, place and position are kept and the
+  /// error is returned as a message for the user (null on success). It used
+  /// to clear the list first, so a failure left only an error screen.
+  Future<String?> updateLocation() async {
+    if (updatingLocation.value) return null;
+    updatingLocation.value = true;
+    try {
+      final (position, place) = await locate(fresh: true);
+      final user = <DayPrayer>[];
+      final mecca = <DayPrayer>[];
+      await loadMonths(position, user, mecca);
+      // Swap everything in one go, so the header, labels and days always
+      // belong to the same place.
+      userPosition = position;
+      city.value = place.city;
+      country.value = place.country;
+      userPrayer.assignAll(user);
+      meccaPrayer.assignAll(mecca);
+      update();
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return describeLoadError(e);
+    } finally {
+      updatingLocation.value = false;
+    }
+  }
+
+  String placeName() => city.value == "Unknown" || city.value.isEmpty
+      ? country.value
+      : city.value;
+
+  /// Appends the month after the last day in [user] (or the current month)
+  /// for [position] and Mecca, repeating until [user] has five days.
+  Future<void> loadMonths(
+      Position position, List<DayPrayer> user, List<DayPrayer> mecca) async {
+    // At most three months: the current month always has today in it, so
+    // this only guards against an API answer with no usable days.
+    var months = 0;
+    do {
+      final (month, year) = getNextMonthAndYearFromPrayers(user);
+      final userPrayerTimes = await getApiForPosition(position, month, year);
+      final meccaPrayerTimes =
+          await getApiForPosition(meccaPosition, month, year);
+      processPrayerTimes(userPrayerTimes, user);
+      processPrayerTimes(meccaPrayerTimes, mecca);
+    } while (user.length < 5 && ++months < 3);
+  }
+
+  /// Expected dates of the current or next Ramadan, once loaded.
+  final ramadan = Rx<RamadanDates?>(null);
+
+  /// Plain-words reason the Ramadan dates couldn't be loaded, or "".
+  final ramadanError = "".obs;
+  final Map<int, RamadanDates> _ramadanByHijriYear = {};
+
+  /// Works out which Ramadan to show from today's Hijri date (in the loaded
+  /// days) and loads its expected Gregorian dates.
+  Future<void> loadRamadan({DateTime? now}) async {
+    final clock = now ?? DateTime.now();
+    final hijri = (dayFor(userPrayer, clock) ??
+            (userPrayer.isEmpty ? null : userPrayer.first))
+        ?.hijri;
+    if (hijri == null) return;
+    ramadanError.value = "";
+    try {
+      final year = ramadanYearFor(hijri);
+      var dates = await ramadanDates(year);
+      // The calculated end can fall a day before the loaded Hijri date
+      // says; then the next Ramadan is the one to count down to.
+      if (ramadanStatus(clock, dates) is RamadanOver) {
+        dates = await ramadanDates(year + 1);
+      }
+      ramadan.value = dates;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      ramadanError.value = describeLoadError(e);
+    }
+  }
+
+  /// 1 Ramadan to its last day of Hijri [year], asked once per year.
+  Future<RamadanDates> ramadanDates(int year) async {
+    final cached = _ramadanByHijriYear[year];
+    if (cached != null) return cached;
+    final start = await hijriToGregorian(1, 9, year);
+    final shawwal = await hijriToGregorian(1, 10, year);
+    final dates = RamadanDates(
+        year, start, DateTime(shawwal.year, shawwal.month, shawwal.day - 1));
+    return _ramadanByHijriYear[year] = dates;
+  }
+
+  /// The Gregorian date of a Hijri date, from aladhan.com's hToG endpoint.
+  Future<DateTime> hijriToGregorian(int day, int month, int year) async {
+    String two(int n) => n.toString().padLeft(2, "0");
+    final response =
+        await loadLink("${serverUrlApi}hToG/${two(day)}-${two(month)}-$year");
+    final parts = "${response.data["data"]["gregorian"]["date"]}".split("-");
+    return DateTime(
+        int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+  }
+
+  /// Adds the days in [prayerTimes] (one aladhan.com calendar month) to
+  /// [prayersList], skipping days before today.
   void processPrayerTimes(
-      List<dynamic> prayerTimes, List<DayPrayer> prayersList) {
+      List<dynamic> prayerTimes, List<DayPrayer> prayersList,
+      {DateTime? now}) {
     tz.Location timeZone = tz.getLocation(prayerTimes[0]["meta"]["timezone"]);
+    final today = now ?? DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
 
     for (var times in prayerTimes) {
       DayPrayer dayPrayer = DayPrayer(
@@ -182,14 +268,13 @@ class SearchEngine extends GetxController {
           times["timings"]["Asr"],
           times["timings"]["Maghrib"],
           times["timings"]["Isha"],
-          timeZone);
+          timeZone,
+          hijri: HijriDate.fromApi(times["date"]["hijri"]));
 
-      // Add prayer times for current and future dates
-      if (dayPrayer.date.month == DateTime.now().month) {
-        if (dayPrayer.date.day >= DateTime.now().day) {
-          prayersList.add(dayPrayer);
-        }
-      } else {
+      // Compare whole dates: checking only the month and day dropped the
+      // first days of this month a year later (e.g. 1-6 November 2027 when
+      // today is 7 November 2026).
+      if (!dayPrayer.date.isBefore(startOfToday)) {
         prayersList.add(dayPrayer);
       }
     }
@@ -224,7 +309,15 @@ class SearchEngine extends GetxController {
   }
 
   Future<void> loadMoreMonth() async {
-    await getPrayerTimes();
-    listRefresher.loadComplete();
+    // While Update location runs, the list is about to be replaced; adding a
+    // month for the old place would mix two places in one list.
+    if (!updatingLocation.value) await getPrayerTimes();
+    // A failed month used to be reported as complete, so the footer showed
+    // nothing and the list just stopped growing.
+    if (loadFailed.value) {
+      listRefresher.loadFailed();
+    } else {
+      listRefresher.loadComplete();
+    }
   }
 }

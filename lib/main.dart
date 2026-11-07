@@ -111,11 +111,10 @@ class MyHomePageState extends State<MyHomePage> {
                   ],
                   borderRadius:
                       BorderRadius.circular(StringConstants.cornersSettings)),
-              child: engine.loadingState.value ==
-                          StringConstants.loadingLinkError ||
-                      engine.loadingState.value
-                          .toLowerCase()
-                          .contains("exception")
+              // Every failure gets a Retry button. Matching the message text
+              // for "exception" missed errors such as "The location service
+              // on the device is disabled.", leaving no way out.
+              child: engine.loadFailed.value
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,

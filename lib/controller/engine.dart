@@ -14,6 +14,9 @@ class SearchEngine extends GetxController {
   String serverUrlApi = "https://api.aladhan.com/v1/";
 
   Rx<String> loadingState = Rx<String>("");
+
+  /// True when the last load failed; [loadingState] then holds the message.
+  RxBool loadFailed = false.obs;
   RxBool appLoaded = false.obs;
   RxString city = "".obs;
   RxString country = "".obs;
@@ -117,6 +120,7 @@ class SearchEngine extends GetxController {
   }
 
   Future<void> getPrayerTimes({bool getNewLocation = false}) async {
+    loadFailed.value = false;
     try {
       // Clear data if fetching for a new location
       if (getNewLocation) {
@@ -165,6 +169,7 @@ class SearchEngine extends GetxController {
         print(e);
       }
       loadingState.value = e.toString();
+      loadFailed.value = true;
     }
   }
 

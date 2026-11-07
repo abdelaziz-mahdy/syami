@@ -76,67 +76,50 @@ class MyHomePageState extends State<MyHomePage> {
       ),
       body: GetX<SearchEngine>(builder: (engine) {
         if (!engine.appLoaded.value) {
-          return Container(
-            padding: const EdgeInsets.all(7),
-            margin: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 3.0,
-                    spreadRadius: 0.0,
-                    offset: Offset(2.0, 2.0), // shadow direction: bottom right
-                  )
-                ],
-                borderRadius:
-                    BorderRadius.circular(StringConstants.cornersSettings)),
-            child: CustomText(
-              engine.loadingState.value,
-              defaultFont: 18,
-            ),
-          );
+          return LoadingView(message: engine.loadingState.value);
+        }
+        if (engine.userPrayer.isEmpty && !engine.loadFailed.value) {
+          return LoadingView(message: engine.loadingState.value);
         }
         if (engine.userPrayer.isEmpty) {
           return Center(
             child: Container(
-              padding: const EdgeInsets.all(7),
-              margin: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                  boxShadow: const [
-                    BoxShadow(
-                      blurRadius: 3.0,
-                      spreadRadius: 0.0,
-                      offset:
-                          Offset(2.0, 2.0), // shadow direction: bottom right
-                    )
-                  ],
-                  borderRadius:
-                      BorderRadius.circular(StringConstants.cornersSettings)),
-              // Every failure gets a Retry button. Matching the message text
-              // for "exception" missed errors such as "The location service
-              // on the device is disabled.", leaving no way out.
-              child: engine.loadFailed.value
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CustomText(
-                          engine.loadingState.value,
-                          maxLines: 10,
+                padding: const EdgeInsets.all(7),
+                margin: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 3.0,
+                        spreadRadius: 0.0,
+                        offset:
+                            Offset(2.0, 2.0), // shadow direction: bottom right
+                      )
+                    ],
+                    borderRadius:
+                        BorderRadius.circular(StringConstants.cornersSettings)),
+                // Every failure gets a Retry button. Matching the message text
+                // for "exception" missed errors such as "The location service
+                // on the device is disabled.", leaving no way out.
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CustomText(
+                      engine.loadingState.value,
+                      maxLines: 10,
+                    ),
+                    SizedBox(height: 10.h),
+                    CustomButton(
+                        primary: Colors.green, // background
+                        onPrimary: Colors.white, // foreground
+                        child: const CustomText(
+                          "Try again",
                         ),
-                        SizedBox(height: 10.h),
-                        CustomButton(
-                            primary: Colors.green, // background
-                            onPrimary: Colors.white, // foreground
-                            child: const CustomText(
-                              "Try again",
-                            ),
-                            onPressed: () {
-                              engine.getPrayerTimes();
-                            }),
-                      ],
-                    )
-                  : CustomText(engine.loadingState.value),
-            ),
+                        onPressed: () {
+                          engine.getPrayerTimes();
+                        }),
+                  ],
+                )),
           );
         }
         return Column(
@@ -541,5 +524,32 @@ class MyHomePageState extends State<MyHomePage> {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     return "${twoDigits(duration.inHours)} Hours and $twoDigitMinutes Minutes";
+  }
+}
+
+/// A spinner with the current step ("Getting your location") under it, so
+/// a slow load reads as work in progress rather than a stuck screen.
+class LoadingView extends StatelessWidget {
+  const LoadingView({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            if (message.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              CustomText(message, maxLines: 3),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

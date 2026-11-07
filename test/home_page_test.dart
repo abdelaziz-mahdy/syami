@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:syami/controller/engine.dart';
@@ -40,5 +41,15 @@ void main() {
     expect(find.textContaining('location service'), findsOneWidget);
     await tester.tap(find.text('Try again'));
     expect(engine.loads, 1);
+  });
+
+  testWidgets('loading shows a spinner with the current step', (tester) async {
+    final engine = await pumpHome(tester);
+    engine.loadingState.value = "Getting your location";
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Getting your location'), findsOneWidget);
+    expect(find.text('Try again'), findsNothing);
   });
 }

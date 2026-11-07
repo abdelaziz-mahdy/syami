@@ -29,6 +29,28 @@ DateTime utc(int day, int h, int m) => DateTime.utc(2026, 11, day, h, m);
 void main() {
   setUpAll(loadTimeZones);
 
+  test("today is the city's date, not the phone's", () {
+    DayPrayer abuDhabi(int day) {
+      final d = day.toString().padLeft(2, '0');
+      String at(String hm) => '2026-11-${d}T$hm:00+04:00';
+      return DayPrayer(
+          '$d-11-2026',
+          'DD-MM-YYYY',
+          'Day',
+          at('05:14'),
+          at('12:09'),
+          at('15:17'),
+          at('17:42'),
+          at('18:58'),
+          tz.getLocation('Asia/Dubai'));
+    }
+
+    final days = [abuDhabi(7), abuDhabi(8)];
+    // 21:12 UTC on the 7th is 01:12 on the 8th in Abu Dhabi.
+    expect(dayFor(days, DateTime.utc(2026, 11, 7, 21, 12))!.date.day, 8);
+    expect(dayFor(days, DateTime.utc(2026, 11, 7, 12))!.date.day, 7);
+  });
+
   group('nextPrayer', () {
     test('is Fajr before dawn', () {
       final next = nextPrayer(utc(7, 4, 0), newcastleDay(7), newcastleDay(8))!;

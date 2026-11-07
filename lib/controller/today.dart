@@ -1,11 +1,19 @@
 import 'package:syami/controller/classes.dart';
+import 'package:timezone/timezone.dart' as tz;
 
-/// The day in [days] whose date is [now]'s date, or null.
+/// The day in [days] that is today in the city the days are for, or null.
+///
+/// "Today" is the city's date, not the phone's: at 21:00 in Atlantic time
+/// it is already tomorrow in Abu Dhabi.
 DayPrayer? dayFor(List<DayPrayer> days, DateTime now) {
+  if (days.isEmpty) return null;
+  final first = days.first.fajr;
+  final local =
+      first is tz.TZDateTime ? tz.TZDateTime.from(now, first.location) : now;
   for (final day in days) {
-    if (day.date.year == now.year &&
-        day.date.month == now.month &&
-        day.date.day == now.day) {
+    if (day.date.year == local.year &&
+        day.date.month == local.month &&
+        day.date.day == local.day) {
       return day;
     }
   }

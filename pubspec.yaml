@@ -33,6 +33,11 @@ flutter_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon/icon.png"
+  # Adaptive icon (Android 8+): the artwork on the app's dark surface, so
+  # Android 12+ doesn't put it on a white disc.
+  adaptive_icon_background: "#141218"
+  adaptive_icon_foreground: "assets/icon/icon.png"
+  adaptive_icon_foreground_inset: 16
 
 flutter:
   uses-material-design: true

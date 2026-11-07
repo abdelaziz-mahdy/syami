@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # versionName+versionCode on Android. The build number must be higher than
 # every build ever uploaded to Google Play.
-version: 1.0.18+20
+version: 1.0.19+21
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

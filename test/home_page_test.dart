@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -176,7 +180,7 @@ void main() {
     expect(find.byTooltip('Update location'), findsOneWidget);
   });
 
-  testWidgets('the iftar row names Mecca properly', (tester) async {
+  testWidgets('the iftar fact names Mecca properly', (tester) async {
     final engine = await pumpHome(tester);
     engine.city.value = 'Mountain View';
     engine.userPrayer.add(abuDhabiDay());
@@ -184,8 +188,8 @@ void main() {
     engine.update();
     await tester.pump();
 
-    expect(find.text("Mountain View Iftar by Mecca's Fasting Duration"),
-        findsOneWidget);
+    expect(find.text("Iftar using Mecca's fasting time"), findsOneWidget);
+    expect(find.text("Fasting in Mountain View"), findsOneWidget);
   });
 
   testWidgets('a day whose dates differ shows a notice instead of throwing',
@@ -223,7 +227,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 750));
 
     // The list, place and position are untouched.
-    expect(find.text('Abu Dhabi Prayer Times'), findsOneWidget);
+    expect(find.text('Fasting in Abu Dhabi'), findsOneWidget);
     expect(engine.userPrayer, hasLength(1));
     expect(engine.city.value, 'Abu Dhabi');
     expect(engine.userPosition!.latitude, 24.45);
@@ -255,19 +259,93 @@ void main() {
     expect(engine.city.value, 'Sarajevo');
     expect(engine.userPrayer, hasLength(7));
     expect(engine.userPrayer.first.date.day, DateTime.now().day);
-    expect(find.text('Sarajevo Prayer Times'), findsWidgets);
+    expect(find.text('Fasting in Sarajevo'), findsWidgets);
     expect(find.byType(SnackBar), findsNothing);
   });
 
   testWidgets('list colours come from the theme', (tester) async {
     await pumpAbuDhabiList(tester);
     final colors =
-        Theme.of(tester.element(find.text('Mecca Times').first)).colorScheme;
+        Theme.of(tester.element(find.text('Fasting in Mecca'))).colorScheme;
 
-    final duration =
-        tester.widget<Text>(find.text('12 Hours and 28 Minutes').first);
+    final duration = tester.widget<Text>(find.text('12 h 28 min').first);
     expect(duration.style!.color, colors.primary);
-    final table = tester.widget<Table>(find.byType(Table).first);
-    expect(table.border!.top.color, colors.outline);
+    final card = tester.widget<Card>(find.byType(Card).last);
+    expect(card.color, colors.surfaceContainer);
+  });
+
+  group('day card at 360 dp', () {
+    setUpAll(() async {
+      // Real Roboto, so text widths match a phone instead of the test font.
+      final dir =
+          '${Platform.environment['FLUTTER_ROOT'] ?? '/Users/AbdelazizMahdy/Developer/flutter'}'
+          '/bin/cache/artifacts/material_fonts';
+      final loader = FontLoader('Roboto');
+      for (final f in [
+        'Roboto-Regular.ttf',
+        'Roboto-Medium.ttf',
+        'Roboto-Bold.ttf'
+      ]) {
+        loader
+            .addFont(File('$dir/$f').readAsBytes().then(ByteData.sublistView));
+      }
+      await loader.load();
+    });
+
+    for (final (country, city) in [
+      ('Bosnia and Herzegovina', 'Sarajevo'),
+      ('United Arab Emirates', 'Abu Dhabi'),
+      ('United Kingdom', 'Newcastle upon Tyne'),
+    ]) {
+      testWidgets('$city: five prayers, both columns, every time on one line',
+          (tester) async {
+        tester.view.physicalSize = const Size(360 * 3, 800 * 3);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+
+        final engine = await pumpHome(tester);
+        engine.country.value = country;
+        engine.city.value = city;
+        engine.userPrayer.add(abuDhabiDay());
+        engine.meccaPrayer.add(abuDhabiDay());
+        engine.update();
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+
+        for (final name in ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']) {
+          expect(find.text(name), findsOneWidget);
+        }
+        expect(find.text('Mecca'), findsOneWidget);
+        expect(find.text(city), findsOneWidget);
+
+        for (final t in [
+          '5:14 AM',
+          '12:09 PM',
+          '3:17 PM',
+          '5:42 PM',
+          '6:58 PM'
+        ]) {
+          // One in the Mecca column, one in the city column.
+          final inTable =
+              find.descendant(of: find.byType(Table), matching: find.text(t));
+          expect(inTable, findsNWidgets(2));
+          for (final e in inTable.evaluate()) {
+            final paragraph = e.renderObject! as RenderParagraph;
+            final lineHeight =
+                paragraph.getFullHeightForCaret(const TextPosition(offset: 0));
+            expect(paragraph.size.height, lessThan(lineHeight * 1.5),
+                reason: '$t wraps');
+            // Fits its column at full size: FittedBox didn't have to shrink it.
+            final box = tester.getSize(find
+                .ancestor(
+                    of: find.byElementPredicate((x) => x == e),
+                    matching: find.byType(FittedBox))
+                .first);
+            expect(paragraph.size.width, lessThanOrEqualTo(box.width + 0.5),
+                reason: t);
+          }
+        }
+      });
+    }
   });
 }

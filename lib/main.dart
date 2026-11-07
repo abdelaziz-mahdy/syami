@@ -1,13 +1,15 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:syami/constants/string_constants.dart';
 
 import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/time_zones.dart';
+import 'package:syami/day_card.dart';
 
 void main() {
   loadTimeZones();
@@ -173,347 +175,27 @@ class MyHomePageState extends State<MyHomePage> {
             }),
             Expanded(
               child: GetBuilder<SearchEngine>(builder: (engine) {
-                bool hourFormattedAs24 =
-                    MediaQuery.of(context).alwaysUse24HourFormat;
-                String hourFormat = hourFormattedAs24 ? 'HH:mm' : 'h:mm a';
-                DateFormat formatter = DateFormat(hourFormat);
-                DateFormat dateFormatter = DateFormat("dd-MM-yyyy");
-                final colors = Theme.of(context).colorScheme;
+                final days =
+                    min(engine.userPrayer.length, engine.meccaPrayer.length);
                 return SmartRefresher(
                   enablePullDown: false,
                   enablePullUp: true,
                   controller: engine.listRefresher,
                   footer: const ClassicFooter(
-                    loadingIcon: CircularProgressIndicator(
-                      strokeWidth: 2.0,
+                    loadingIcon: SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
                     ),
                   ),
-                  onLoading: () {
-                    engine.loadMoreMonth();
-                  },
-                  child: ListView.separated(
-                      scrollDirection: Axis.vertical,
-                      itemCount: engine.userPrayer.length,
-                      separatorBuilder: (context, index) {
-                        return const Divider(
-                          height: 5,
-                        );
-                      },
-                      itemBuilder: (BuildContext context, int index) {
-                        if (dateFormatter
-                                .format(engine.meccaPrayer[index].date) !=
-                            dateFormatter
-                                .format(engine.userPrayer[index].date)) {
-                          return Container(
-                            padding: const EdgeInsets.all(7),
-                            margin: const EdgeInsets.only(left: 7, right: 7),
-                            decoration: BoxDecoration(
-                                boxShadow: const [
-                                  BoxShadow(
-                                    blurRadius: 3.0,
-                                    spreadRadius: 0.0,
-                                    offset: Offset(2.0,
-                                        2.0), // shadow direction: bottom right
-                                  )
-                                ],
-                                borderRadius: BorderRadius.circular(
-                                    StringConstants.cornersSettings)),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                CustomText(
-                                  "Dates are not the same",
-                                  color: colors.error,
-                                ),
-                                // A Spacer here threw: list items have no height
-                                // limit for it to fill.
-                                const SizedBox(height: 6),
-                                CustomText(
-                                    "Mecca date: ${dateFormatter.format(engine.meccaPrayer[index].date)}"),
-                                CustomText(
-                                    "${engine.city} date: ${dateFormatter.format(engine.userPrayer[index].date)}")
-                              ],
-                            ),
-                          );
-                        }
-                        Duration fastingMecca = engine
-                            .meccaPrayer[index].maghrib
-                            .difference(engine.meccaPrayer[index].fajr);
-                        Duration fastingUser = engine.userPrayer[index].maghrib
-                            .difference(engine.userPrayer[index].fajr);
-
-                        DateTime iftarUser =
-                            engine.userPrayer[index].fajr.add(fastingMecca);
-
-                        return Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Container(
-                            padding: const EdgeInsets.all(15),
-                            margin: const EdgeInsets.only(left: 7, right: 7),
-                            decoration: BoxDecoration(
-                                boxShadow: const [
-                                  BoxShadow(
-                                    blurRadius: 3.0,
-                                    spreadRadius: 0.0,
-                                    offset: Offset(2.0,
-                                        2.0), // shadow direction: bottom right
-                                  )
-                                ],
-                                borderRadius: BorderRadius.circular(
-                                    StringConstants.cornersSettings)),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Row(
-                                  children: [
-                                    CustomText(
-                                      engine.meccaPrayer[index].weekDay,
-                                      bold: true,
-                                      //defaultFont: 18,
-                                    ),
-                                    const Spacer(),
-                                    CustomText(
-                                      dateFormatter.format(
-                                        engine.meccaPrayer[index].date,
-                                      ),
-                                      bold: true,
-                                      //defaultFont: 18,
-                                    ),
-                                  ],
-                                ),
-                                const Divider(),
-                                const Padding(
-                                  padding: EdgeInsets.only(bottom: 7.0),
-                                  child: CustomText(
-                                    "Mecca Times",
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 5, right: 5, bottom: 25.0),
-                                  child: Table(
-                                      border: TableBorder.all(
-                                          color: colors.outline),
-                                      // Allows to add a border decoration around your table
-                                      children: [
-                                        TableRow(
-                                            children: [
-                                          const Center(
-                                              child: CustomText(
-                                            "Fajr",
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Dhuhr',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Asr',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Maghrib',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Isha',
-                                          )),
-                                        ]
-                                                .map((e) => Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            5.0),
-                                                    child: e))
-                                                .toList()),
-                                        TableRow(
-                                            children: [
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .meccaPrayer[index].fajr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .meccaPrayer[index].dhuhr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .meccaPrayer[index].asr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .meccaPrayer[index].maghrib),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .meccaPrayer[index].isha),
-                                            ),
-                                          ),
-                                        ]
-                                                .map((e) => Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            5.0),
-                                                    child: e))
-                                                .toList()),
-                                      ]),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 7.0),
-                                  child: CustomText(
-                                    "${engine.city.value} Prayer Times",
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 5, right: 5, bottom: 25.0),
-                                  child: Table(
-                                      border: TableBorder.all(
-                                          color: colors.outline),
-                                      // Allows to add a border decoration around your table
-                                      children: [
-                                        TableRow(
-                                            children: [
-                                          const Center(
-                                              child: CustomText(
-                                            "Fajr",
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Dhuhr',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Asr',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Maghrib',
-                                          )),
-                                          const Center(
-                                              child: CustomText(
-                                            'Isha',
-                                          )),
-                                        ]
-                                                .map((e) => Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            5.0),
-                                                    child: e))
-                                                .toList()),
-                                        TableRow(
-                                            children: [
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .userPrayer[index].fajr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .userPrayer[index].dhuhr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(
-                                                  engine.userPrayer[index].asr),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .userPrayer[index].maghrib),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: CustomText(
-                                              formatter.format(engine
-                                                  .userPrayer[index].isha),
-                                            ),
-                                          ),
-                                        ]
-                                                .map((e) => Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            5.0),
-                                                    child: e))
-                                                .toList()),
-                                      ]),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 7.0),
-                                  child: Row(
-                                    children: [
-                                      const Expanded(
-                                        child: CustomText(
-                                          "Mecca Fasting Duration ",
-                                          center: false,
-                                        ),
-                                      ),
-                                      Expanded(
-                                          child: CustomText(
-                                        engineprintDuration(fastingMecca),
-                                        color: colors.primary,
-                                      ))
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 7.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: CustomText(
-                                          "${engine.city.value} Fasting Duration ",
-                                          center: false,
-                                        ),
-                                      ),
-                                      Expanded(
-                                          child: CustomText(
-                                        engineprintDuration(fastingUser),
-                                        color: colors.primary,
-                                      ))
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 7.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 3,
-                                        child: CustomText(
-                                          "${engine.city.value} Iftar by Mecca's Fasting Duration",
-                                          center: false,
-                                          maxLines: 3,
-                                        ),
-                                      ),
-                                      Expanded(
-                                          child: CustomText(
-                                        formatter.format(iftarUser),
-                                        maxLines: 3,
-                                        color: colors.primary,
-                                      ))
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
+                  onLoading: engine.loadMoreMonth,
+                  child: ListView.builder(
+                    itemCount: days,
+                    itemBuilder: (context, index) => DayCard(
+                      mecca: engine.meccaPrayer[index],
+                      local: engine.userPrayer[index],
+                      city: engine.placeName(),
+                    ),
+                  ),
                 );
               }),
             ),
@@ -538,12 +220,6 @@ class MyHomePageState extends State<MyHomePage> {
           onPressed: () => updateLocation(engine),
         ),
       ));
-  }
-
-  String engineprintDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-    return "${twoDigits(duration.inHours)} Hours and $twoDigitMinutes Minutes";
   }
 }
 

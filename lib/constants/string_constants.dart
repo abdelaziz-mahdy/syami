@@ -39,39 +39,3 @@ class CustomText extends StatelessWidget {
     );
   }
 }
-
-class CustomButton extends StatelessWidget {
-  final Widget child;
-  final Color? primary;
-  final Color? onPrimary;
-  final Color? borderColor;
-  final double? width;
-  final double? height;
-  final void Function()? onPressed;
-
-  const CustomButton({
-    super.key,
-    required this.child,
-    this.primary,
-    this.onPrimary,
-    this.borderColor,
-    this.width,
-    this.height,
-    this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      style: TextButton.styleFrom(
-        minimumSize: Size(width ?? 30.w, height ?? 50.h),
-        side: borderColor != null
-            ? BorderSide(width: 1.r, color: borderColor!)
-            : null,
-        backgroundColor: primary ?? Colors.grey[900],
-      ),
-      onPressed: onPressed,
-      child: child,
-    );
-  }
-}

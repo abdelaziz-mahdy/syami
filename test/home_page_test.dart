@@ -120,6 +120,14 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('location service'), findsOneWidget);
+    // A themed button, not a hard-coded green one.
+    expect(
+      find.ancestor(
+        of: find.text('Try again'),
+        matching: find.byWidgetPredicate((w) => w is FilledButton),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Try again'));
     expect(engine.loads, 1);
   });

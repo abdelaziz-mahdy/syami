@@ -99,15 +99,11 @@ class MyHomePageState extends State<MyHomePage> {
                       maxLines: 10,
                     ),
                     SizedBox(height: 10.h),
-                    CustomButton(
-                        primary: Colors.green, // background
-                        onPrimary: Colors.white, // foreground
-                        child: const CustomText(
-                          "Try again",
-                        ),
-                        onPressed: () {
-                          engine.getPrayerTimes();
-                        }),
+                    FilledButton.icon(
+                      onPressed: engine.getPrayerTimes,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Try again"),
+                    ),
                   ],
                 )),
           );

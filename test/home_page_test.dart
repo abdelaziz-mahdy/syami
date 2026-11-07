@@ -30,15 +30,15 @@ Future<FakeEngine> pumpHome(WidgetTester tester) async {
   return engine;
 }
 
-DayPrayer abuDhabiDay() => DayPrayer(
-      '07-11-2026',
+DayPrayer abuDhabiDay([String day = '07']) => DayPrayer(
+      '$day-11-2026',
       'DD-MM-YYYY',
       'Saturday',
-      '2026-11-07T05:14:00+04:00',
-      '2026-11-07T12:09:00+04:00',
-      '2026-11-07T15:17:00+04:00',
-      '2026-11-07T17:42:00+04:00',
-      '2026-11-07T18:58:00+04:00',
+      '2026-11-${day}T05:14:00+04:00',
+      '2026-11-${day}T12:09:00+04:00',
+      '2026-11-${day}T15:17:00+04:00',
+      '2026-11-${day}T17:42:00+04:00',
+      '2026-11-${day}T18:58:00+04:00',
       tz.getLocation('Asia/Dubai'),
     );
 
@@ -113,5 +113,19 @@ void main() {
 
     expect(find.text("Mountain View Iftar by Mecca's Fasting Duration"),
         findsOneWidget);
+  });
+
+  testWidgets('a day whose dates differ shows a notice instead of throwing',
+      (tester) async {
+    final engine = await pumpHome(tester);
+    engine.city.value = 'Abu Dhabi';
+    engine.userPrayer.add(abuDhabiDay('07'));
+    engine.meccaPrayer.add(abuDhabiDay('08'));
+    engine.update();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Dates are not the same'), findsOneWidget);
+    expect(find.text('Abu Dhabi date: 07-11-2026'), findsOneWidget);
   });
 }

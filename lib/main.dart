@@ -218,11 +218,13 @@ class MyHomePageState extends State<MyHomePage> {
                                   "Dates are not the same",
                                   color: Colors.red,
                                 ),
-                                const Spacer(),
+                                // A Spacer here threw: list items have no height
+                                // limit for it to fill.
+                                const SizedBox(height: 6),
                                 CustomText(
-                                    "Mecca date :${dateFormatter.format(engine.meccaPrayer[index].date)}"),
+                                    "Mecca date: ${dateFormatter.format(engine.meccaPrayer[index].date)}"),
                                 CustomText(
-                                    "${engine.city} date :${dateFormatter.format(engine.userPrayer[index].date)}")
+                                    "${engine.city} date: ${dateFormatter.format(engine.userPrayer[index].date)}")
                               ],
                             ),
                           );

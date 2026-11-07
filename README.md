@@ -31,7 +31,7 @@ Prayer times come from the [Aladhan API](https://aladhan.com/prayer-times-api)
 | `lib/controller/classes.dart` | `DayPrayer`, one day's prayer times parsed in the city's time zone |
 | `lib/controller/load_errors.dart` | Turns failures into messages for users |
 | `lib/controller/time_zones.dart` | Loads the full IANA time zone database |
-| `lib/constants/string_constants.dart` | Shared text and button widgets |
+| `lib/day_card.dart` | One day: the prayer table, fasting durations and iftar time |
 | `test/` | Unit and widget tests (`flutter test`) |
 | `tool/play_whatsnew.py` | Turns the newest CHANGELOG entry into Play "What's new" notes |
 

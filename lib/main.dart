@@ -2,7 +2,6 @@ import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
@@ -33,15 +32,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     Get.put(SearchEngine(), permanent: true);
 
-    return ScreenUtilInit(
-      designSize: const Size(411.42857142857144, 683.4285714285714),
-      child: GetMaterialApp(
-        title: "Syami",
-        theme: ThemeData.dark(),
-        themeMode: ThemeMode.dark,
-        home: const MyHomePage(
-          title: 'Syami',
-        ),
+    return GetMaterialApp(
+      title: "Syami",
+      theme: ThemeData.dark(),
+      themeMode: ThemeMode.dark,
+      home: const MyHomePage(
+        title: 'Syami',
       ),
     );
   }

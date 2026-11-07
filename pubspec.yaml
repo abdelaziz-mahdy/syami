@@ -15,7 +15,6 @@ dependencies:
   get: ^4.6.1
   dio: ^5.4.1
   dio_smart_retry: ^7.0.1
-  flutter_screenutil: ^5.3.1
   geolocator: ^14.0.2
   geocoding: ^5.0.1
   intl: ^0.20.2

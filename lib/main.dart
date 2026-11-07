@@ -167,6 +167,7 @@ class MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       IconButton(
+                          tooltip: "Update location",
                           onPressed: () {
                             engine.getPrayerTimes(getNewLocation: true);
                           },

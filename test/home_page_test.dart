@@ -90,4 +90,16 @@ void main() {
     expect(tester.getRect(find.byIcon(Icons.refresh)).right,
         lessThanOrEqualTo(1080 / 2.625));
   });
+
+  testWidgets('the refresh button says what it does', (tester) async {
+    final engine = await pumpHome(tester);
+    engine.country.value = 'United States';
+    engine.city.value = 'Mountain View';
+    engine.userPrayer.add(abuDhabiDay());
+    engine.meccaPrayer.add(abuDhabiDay());
+    engine.update();
+    await tester.pump();
+
+    expect(find.byTooltip('Update location'), findsOneWidget);
+  });
 }

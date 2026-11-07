@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:syami/constants/string_constants.dart';
 
 import 'package:syami/controller/engine.dart';
 import 'package:syami/controller/time_zones.dart';
@@ -74,40 +73,12 @@ class MyHomePageState extends State<MyHomePage> {
           return LoadingView(message: engine.loadingState.value);
         }
         if (engine.userPrayer.isEmpty) {
-          return Center(
-            child: Container(
-                padding: const EdgeInsets.all(7),
-                margin: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 3.0,
-                        spreadRadius: 0.0,
-                        offset:
-                            Offset(2.0, 2.0), // shadow direction: bottom right
-                      )
-                    ],
-                    borderRadius:
-                        BorderRadius.circular(StringConstants.cornersSettings)),
-                // Every failure gets a Retry button. Matching the message text
-                // for "exception" missed errors such as "The location service
-                // on the device is disabled.", leaving no way out.
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomText(
-                      engine.loadingState.value,
-                      maxLines: 10,
-                    ),
-                    SizedBox(height: 10.h),
-                    FilledButton.icon(
-                      onPressed: engine.getPrayerTimes,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text("Try again"),
-                    ),
-                  ],
-                )),
+          // Every failure gets a Try again button. Matching the message text
+          // for "exception" missed errors such as "The location service on
+          // the device is disabled.", leaving no way out.
+          return ErrorView(
+            message: engine.loadingState.value,
+            onRetry: engine.getPrayerTimes,
           );
         }
         return Column(
@@ -224,6 +195,7 @@ class LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -233,9 +205,51 @@ class LoadingView extends StatelessWidget {
             const CircularProgressIndicator(),
             if (message.isNotEmpty) ...[
               const SizedBox(height: 20),
-              CustomText(message, maxLines: 3),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A first load that failed with nothing to show: the reason in plain
+/// words and the screen's one action, Try again.
+class ErrorView extends StatelessWidget {
+  const ErrorView({super.key, required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline,
+                  size: 40, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(height: 16),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text("Try again"),
+              ),
+            ],
+          ),
         ),
       ),
     );
